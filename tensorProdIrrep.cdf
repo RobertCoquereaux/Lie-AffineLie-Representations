@@ -23,10 +23,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[      1064,         20]
-NotebookDataLength[     36964,        920]
-NotebookOptionsPosition[     35762,        873]
-NotebookOutlinePosition[     36261,        894]
-CellTagsIndexPosition[     36218,        891]
+NotebookDataLength[     36068,        877]
+NotebookOptionsPosition[     35929,        848]
+NotebookOutlinePosition[     36377,        868]
+CellTagsIndexPosition[     36334,        865]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -44,11 +44,11 @@ OF SU(n)  -  Interface - Manual update of components.\
  FontWeight->"Bold",
  FontColor->RGBColor[
   0.597406, 0, 
-   0.0527047],ExpressionUUID->"d7fba92f-02ab-43e4-917b-5248fd766dbb"],
+   0.0527047],ExpressionUUID->"00000000-0000-0000-0000-000000000000"],
 
 Cell[BoxData[
  DynamicModuleBox[{$CellContext`rows$$ = 2, $CellContext`cols$$ = 
-  3, $CellContext`mat$$ = {{1, 0, 3}, {2, 1, 0}}, $CellContext`myRange$$}, 
+  3, $CellContext`mat$$ = {{0, 3, 0}, {1, 2, 3}}, $CellContext`myRange$$}, 
   DynamicBox[ToBoxes[
     Manipulate[
      Row[{
@@ -91,6 +91,9 @@ in the basis of fundamental weights (Dynkin basis)."}]}]]],
         Style[$CellContext`cols$$ + 1, FontSize -> 14, Bold], 
         Style["SU(n), with n =", Bold, FontSize -> 14], Left, 
         BaselinePosition -> Bottom], 
+       Button[
+        Style["Update", Bold, FontSize -> 14, Blue], 
+        Increment[$CellContext`rows$$]; Decrement[$CellContext`rows$$]; Null], 
        Panel[
         Style[
          Column[{
@@ -108,12 +111,10 @@ decomposition.", "the second element gives its multiplicity."}],
      Button["Increase n", $CellContext`mat$$ = Transpose[
          Append[
           Transpose[$CellContext`mat$$], 
-          Table[0, {1 + 1}]]]; Increment[$CellContext`cols$$]; Null], 
-     Button[
-     "Update", Increment[$CellContext`rows$$]; Decrement[$CellContext`rows$$]; 
+          Table[0, {1 + 1}]]]; Increment[$CellContext`cols$$]; 
       Null], {{$CellContext`doit, 0, ""}, {0}, ControlType -> None}, 
      TrackedSymbols :> {$CellContext`doit}], StandardForm],
-   ImageSizeCache->{888., {237., 243.}}],
+   ImageSizeCache->{985., {243., 249.}}],
   SynchronousUpdating -> False,
   DynamicModuleValues:>{{DownValues[$CellContext`myRange$$] = {HoldPattern[
          $CellContext`myRange$$[
@@ -211,7 +212,7 @@ use."], shorttensorProdIrrepPackage`oblade[
           Blank[]]] := Table[
          Take[
           
-          Table[(1/2) (3 Private`p + Private`p^2) + ((1/2) (Private`lev - 1)) 
+          Table[(1/2) (3 Private`p + Private`p^2) + (1/2) (Private`lev - 1) 
             Private`lev + (Private`lev - 1) Private`p, {
            Private`p, 1, Private`NN}], {Private`z, Private`z + 1}], {
          Private`z, 1, Private`NN - Private`lev}]; Private`edgesNWSElabels[
@@ -219,9 +220,9 @@ use."], shorttensorProdIrrepPackage`oblade[
           Blank[]]] := Table[
          Take[
           Range[
-          1 + ((1/2) (-Private`lev + Private`NN)) (1 - Private`lev + 
+          1 + (1/2) (-Private`lev + Private`NN) (1 - Private`lev + 
              Private`NN), 1 - Private`lev + 
-           Private`NN + ((1/2) (-Private`lev + Private`NN)) (1 - Private`lev + 
+           Private`NN + (1/2) (-Private`lev + Private`NN) (1 - Private`lev + 
              Private`NN)], {Private`z, Private`z + 1}], {
          Private`z, 1, Private`NN - Private`lev}]; Private`components = Join[
          Table[
@@ -349,7 +350,7 @@ returns n and set the variable currentgroup to n."], Private`lambdaequations =
       Pattern[Private`lev$, 
        Blank[]]] := Table[
       Take[
-       Table[(1/2) (3 Private`p + Private`p^2) + ((1/2) (Private`lev$ - 1)) 
+       Table[(1/2) (3 Private`p + Private`p^2) + (1/2) (Private`lev$ - 1) 
          Private`lev$ + (Private`lev$ - 1) Private`p, {Private`p, 1, 4}], {
        Private`z, Private`z + 1}], {Private`z, 1, 4 - Private`lev$}], 
     Private`edgesNWSElabels[
@@ -357,9 +358,8 @@ returns n and set the variable currentgroup to n."], Private`lambdaequations =
        Blank[]]] := Table[
       Take[
        Range[
-       1 + ((1/2) (-Private`lev$ + 4)) (1 - Private`lev$ + 4), 1 - 
-        Private`lev$ + 
-        4 + ((1/2) (-Private`lev$ + 4)) (1 - Private`lev$ + 4)], {
+       1 + (1/2) (-Private`lev$ + 4) (1 - Private`lev$ + 4), 1 - Private`lev$ + 
+        4 + (1/2) (-Private`lev$ + 4) (1 - Private`lev$ + 4)], {
        Private`z, Private`z + 1}], {Private`z, 1, 4 - Private`lev$}], 
     Private`components = {{
        Private`j[1, 3, 0], 
@@ -445,13 +445,61 @@ returns n and set the variable currentgroup to n."], Private`lambdaequations =
          Private`l3$}}]}], Attributes[Private`l1$] = {Temporary}, 
     Attributes[Private`l2$] = {Temporary}, 
     Attributes[Private`l3$] = {Temporary}, 
-    Private`componentsEdgesAndnuc[{1, 1, 3}, {1, 2, 0}] = {{}, {}, {}, {}, {{
-      3, 0, 0}, {1, 1, 0}, {5, 1, 0}, {3, 2, 0}, {3, 2, 0}, {1, 3, 0}, {2, 1, 
-      1}, {3, 4, 0}, {4, 2, 1}, {2, 3, 1}, {4, 0, 1}, {4, 0, 1}, {2, 1, 1}, {
-      2, 1, 1}, {0, 2, 1}, {1, 0, 2}, {4, 2, 1}, {2, 3, 1}, {3, 1, 2}, {3, 1, 
-      2}, {1, 2, 2}, {3, 3, 2}, {5, 0, 2}, {3, 1, 2}, {1, 2, 2}, {2, 0, 3}, {
-      2, 0, 3}, {0, 1, 3}, {4, 1, 3}, {2, 2, 3}, {3, 0, 4}, {1, 1, 4}}}, 
-    Private`componentsEdgesAndnuc[{
+    Private`componentsEdgesAndnuc[{1, 0, 1}, {3, 0, 3}] = {{}, {}, {}, {}, {{
+      3, 1, 1}, {2, 0, 2}, {4, 1, 2}, {3, 0, 3}, {2, 2, 2}, {3, 0, 3}, {4, 0, 
+      4}, {1, 1, 3}, {2, 1, 4}}}, 
+    Private`componentsEdgesAndnuc[{2, 0, 2}, {0, 0, 0}] = {{}, {}, {}, {}, {{
+      2, 0, 2}}}, 
+    Private`componentsEdgesAndnuc[{2, 2, 3}, {1, 0, 3}] = {{}, {}, {}, {}, {{
+      5, 1, 0}, {3, 2, 0}, {5, 3, 0}, {6, 1, 1}, {4, 2, 1}, {6, 3, 1}, {7, 1, 
+      2}, {5, 2, 2}, {3, 2, 0}, {1, 3, 0}, {3, 4, 0}, {4, 2, 1}, {2, 3, 1}, {
+      4, 4, 1}, {5, 2, 2}, {3, 3, 2}, {1, 5, 0}, {2, 3, 1}, {0, 4, 1}, {2, 5, 
+      1}, {3, 3, 2}, {1, 4, 2}, {0, 6, 1}, {1, 4, 2}, {4, 0, 1}, {2, 1, 1}, {
+      4, 2, 1}, {5, 0, 2}, {3, 1, 2}, {5, 2, 2}, {6, 0, 3}, {4, 1, 3}, {6, 2, 
+      3}, {2, 3, 1}, {3, 1, 2}, {1, 2, 2}, {3, 3, 2}, {4, 1, 3}, {2, 2, 3}, {
+      4, 3, 3}, {1, 4, 2}, {2, 2, 3}, {0, 3, 3}, {2, 4, 3}, {0, 5, 3}, {3, 1, 
+      2}, {2, 0, 3}, {4, 1, 3}, {3, 0, 4}, {5, 1, 4}, {2, 2, 3}, {1, 1, 4}, {
+      3, 2, 4}, {1, 3, 4}, {3, 0, 4}, {4, 0, 5}, {2, 1, 5}}}, 
+    Private`componentsEdgesAndnuc[{2, 3, 3}, {3, 1, 
+      2}] = {{}, {}, {}, {}, CompressedData["
+1:eJxlU9F1xCAMk20M6RhdqRP03QLd/+/kiHPy0j6qMwbJMoTv19/PywH8GhD8
+HYAzdBzANAyHxxUkLMzM7XDMwBgbPfEFW2bpFnEFEz7M+dcKLNCBpFpB2Fwb
+V7BFuGdiheWwSDvMp/sI/ru4mBubKCQX4eT6grg2rblMslsllSG/O+2ArmHe
+9rrE1eMniOos5PNhtYuuKhjh0cHDs6TK9iegptQe/oUSIVwB93A1fVE8IkaI
+eG9TqP0bl5FCo6JYhtyDKue022xj6lfIe5WxR5vtqu7fhvBuT+UO0rnqG1ly
+35Eu5SMipAK9CO+et89WODGZYczZrRcOrfLjE2qT86BXEDGHiv43X8eA5FBR
+ldu1UNJC81TdxYzXqF7HVXrXPXcKZWDv5MnRe83KjKYckWkz7+XE5bvkANdO
++iTHavB0ps9q71RQpr7ZqCTPu55H7p3BR1YPcWWdQg1+zgMH3/0bCQgN5A==
+
+      "]}, 
+    Private`componentsEdgesAndnuc[{3, 0, 0}, {2, 3, 3}] = {{}, {}, {}, {}, {{
+      4, 4, 0}, {2, 5, 0}, {3, 5, 1}, {5, 2, 1}, {3, 3, 1}, {4, 3, 2}, {1, 4, 
+      1}, {2, 4, 2}, {3, 4, 3}, {6, 0, 2}, {4, 1, 2}, {5, 1, 3}, {2, 2, 2}, {
+      3, 2, 3}, {4, 2, 4}, {0, 3, 2}, {1, 3, 3}, {2, 3, 4}, {3, 3, 5}}}, 
+    Private`componentsEdgesAndnuc[{3, 0, 1}, {1, 2, 1}] = {{}, {}, {}, {}, {{
+      2, 0, 0}, {4, 1, 0}, {2, 2, 0}, {3, 0, 1}, {2, 2, 0}, {0, 3, 0}, {1, 1, 
+      1}, {3, 2, 1}, {1, 3, 1}, {2, 1, 2}, {1, 3, 1}, {0, 2, 2}, {2, 3, 2}, {
+      1, 2, 3}, {0, 4, 2}, {3, 0, 1}, {1, 1, 1}, {4, 0, 2}, {2, 1, 2}, {2, 1, 
+      2}, {0, 2, 2}, {3, 1, 3}, {1, 2, 3}, {1, 2, 3}, {2, 2, 4}, {0, 3, 4}, {
+      1, 0, 3}, {2, 0, 4}, {0, 1, 4}, {1, 1, 5}}}, 
+    Private`componentsEdgesAndnuc[{3, 1, 2}, {2, 0, 2}] = {{}, {}, {}, {}, {{
+      3, 1, 0}, {1, 2, 0}, {2, 0, 1}, {0, 1, 1}, {3, 3, 0}, {4, 1, 1}, {2, 2, 
+      1}, {3, 0, 2}, {1, 1, 2}, {4, 3, 1}, {5, 1, 2}, {3, 2, 2}, {4, 0, 3}, {
+      2, 1, 3}, {1, 4, 0}, {2, 2, 1}, {0, 3, 1}, {1, 1, 2}, {2, 4, 1}, {3, 2, 
+      2}, {1, 3, 2}, {2, 1, 3}, {0, 5, 1}, {1, 3, 2}, {0, 2, 3}, {2, 2, 1}, {
+      3, 0, 2}, {1, 1, 2}, {0, 0, 3}, {3, 2, 2}, {4, 0, 3}, {2, 1, 3}, {1, 0, 
+      4}, {4, 2, 3}, {5, 0, 4}, {3, 1, 4}, {1, 3, 2}, {2, 1, 3}, {0, 2, 3}, {
+      2, 3, 3}, {3, 1, 4}, {1, 2, 4}, {0, 4, 3}, {1, 2, 4}, {2, 1, 3}, {1, 0, 
+      4}, {3, 1, 4}, {2, 0, 5}, {4, 1, 5}, {1, 2, 4}, {0, 1, 5}, {2, 2, 5}, {
+      0, 3, 5}, {2, 0, 5}, {3, 0, 6}, {1, 1, 6}}}, 
+    Private`componentsEdgesAndnuc[{3, 1, 2}, {2, 1, 
+      2}] = {{}, {}, {}, {}, CompressedData["
+1:eJxdkIFtAzEMA0lKcubISh0hC3SXTlzqiTzSAmc/8KIoys/X99dLAH58Kodc
+/B2itLDQoLgQmkI1DtlaVBz4WiyP3mi1i8VWRGl8WWi6OZIbmqW3C3pxVUOX
+PMClDLP3HeN2/xdgG6/UcT5Oyoq/lzAZcWdI1gyKbJPQCbqrhr3pkqEWdfI2
+xpv050T8HWSHtFtqdO1qh5jHZH9yeldtv6tR+aUm7Xg3Emdwike7qAcf6gJH
+eICPX9unBfw=
+      "]}, Private`componentsEdgesAndnuc[{
        Pattern[Private`lam$, 
         BlankSequence[]]}, {
        Pattern[Private`mu$, 
@@ -487,7 +535,7 @@ returns n and set the variable currentgroup to n."], Private`lambdaequations =
     Attributes[$CellContext`makeRow$] = {Temporary}, 
     Attributes[$CellContext`rowIndex$] = {Temporary}, 
     Attributes[$CellContext`colIndex$] = {Temporary}}]], "Output",ExpressionUU\
-ID->"e6cda5a8-d4fc-4356-a7aa-1c16ddb45f32"]
+ID->"00000000-0000-0000-0000-000000000000"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -500,12 +548,12 @@ Cell["CAPTION", "Subsection",
  FontWeight->"Bold",
  FontColor->RGBColor[
   0.597406, 0, 
-   0.0527047],ExpressionUUID->"906349a9-9355-494a-be7f-ca666b87a002"],
+   0.0527047],ExpressionUUID->"00000000-0000-0000-0000-000000000000"],
 
 Cell["\<\
 The program decomposes the product of two irreducible representations of \
 SU(n) into a direct sum.\
-\>", "Text",ExpressionUUID->"158f5d17-63c8-4909-87b7-87a04abb5a76"]
+\>", "Text",ExpressionUUID->"00000000-0000-0000-0000-000000000000"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -518,7 +566,7 @@ Cell["DETAILS", "Subsection",
  FontWeight->"Bold",
  FontColor->RGBColor[
   0.597406, 0, 
-   0.0527047],ExpressionUUID->"682e4d26-7a49-4ec2-bf0d-3ece5811f0d8"],
+   0.0527047],ExpressionUUID->"00000000-0000-0000-0000-000000000000"],
 
 Cell[TextData[{
  "The decomposition of the tensor product of irreducible representations is \
@@ -562,7 +610,7 @@ pdf"],
     "http://emis.ams.org/journals/JACO/Volume1_1/h7x307752t449r38.fulltext.\
 pdf", "Hyperlink"]& ]],
   CellChangeTimes->{3.714119849614003*^9},ExpressionUUID->
-  "bf0937e1-fa4b-4131-908a-a1dbb929ebd3"],
+  "e4a3607a-a7e6-4e8d-b7bc-357491de5f3c"],
  "\n[2] ",
  Cell[BoxData[
   TagBox[
@@ -600,7 +648,7 @@ fusion rules, L. B\[EAcute]gin, A.N. Kirillov, P. Mathieu and M.A. Walton \
    3.714117744715974*^9, {3.71411778107472*^9, 3.7141178076777773`*^9}, 
     3.714117838620057*^9, 3.7141179102260942`*^9, {3.714117995649395*^9, 
     3.714118013338854*^9}, 3.714118157897002*^9},ExpressionUUID->
-  "aa6d47f7-d64b-48cf-9c65-61f9add0325b"],
+  "d3693dfe-1024-408e-a305-60fbabe4670b"],
  "\n[3] ",
  Cell[BoxData[
   TagBox[
@@ -626,9 +674,9 @@ the saturation conjecture, A.Knutson and T.Tao (1999)\"\>",
     ButtonNote->"https://arxiv.org/abs/math/9807160"],
    Annotation[#, "https://arxiv.org/abs/math/9807160", "Hyperlink"]& ]],
   CellChangeTimes->{{3.7141193542094316`*^9, 3.714119377260558*^9}},
-  ExpressionUUID->"f2b1a782-83d8-4434-9e16-66dd3ed953f7"]
+  ExpressionUUID->"f2b9088b-92ac-47f7-a656-315a0a832bc0"]
 }], "Text",
- FontSize->12,ExpressionUUID->"0bca954a-f91d-4788-84f6-3e4757ebb1e6"],
+ FontSize->12,ExpressionUUID->"00000000-0000-0000-0000-000000000000"],
 
 Cell[TextData[{
  StyleBox["The code is made of two parts :\n- A Mathematica package called \
@@ -646,7 +694,7 @@ manipulate commands.",
   FontSize->12,
   FontWeight->"Regular"],
  "\n"
-}], "Text",ExpressionUUID->"6dcead3d-b329-45c1-8fde-cce9c14ecc70"]
+}], "Text",ExpressionUUID->"00000000-0000-0000-0000-000000000000"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -659,7 +707,7 @@ Cell["CAVEATS", "Subsection",
  FontWeight->"Bold",
  FontColor->RGBColor[
   0.597406, 0, 
-   0.0527047],ExpressionUUID->"3ad5909b-7fa2-4738-b432-625cd539ef7c"],
+   0.0527047],ExpressionUUID->"00000000-0000-0000-0000-000000000000"],
 
 Cell[CellGroupData[{
 
@@ -679,8 +727,8 @@ the program should be smaller than \"\>",
    Style["Web version: The number of inequivalent irreps generated by the \
 program should be smaller than ", 12, Bold], 
    Style[800, 12, Bold]],
-  Editable->False]], "Print",ExpressionUUID->"c1160743-ce86-422e-87b4-\
-95def800c3dd"],
+  Editable->False]], "Print",ExpressionUUID->"00000000-0000-0000-0000-\
+000000000000"],
 
 Cell[BoxData[
  InterpretationBox[
@@ -703,8 +751,8 @@ than \"\>",
     12, Bold], 
    Style[1.5, 12, Bold], 
    Style[" seconds", 12, Bold]],
-  Editable->False]], "Print",ExpressionUUID->"d37773d3-14e5-4d87-9e05-\
-ee63a81e62af"]
+  Editable->False]], "Print",ExpressionUUID->"00000000-0000-0000-0000-\
+000000000000"]
 }, Open  ]]
 }, Open  ]],
 
@@ -718,86 +766,12 @@ Cell["CITATION", "Subsection",
  FontWeight->"Bold",
  FontColor->RGBColor[
   0.597406, 0, 
-   0.0527047],ExpressionUUID->"df205c75-bae8-4ac2-a6be-5e0c7f4add95"],
+   0.0527047],ExpressionUUID->"00000000-0000-0000-0000-000000000000"],
 
 Cell["\<\
 If you use this program in a scientific publication or talk, please give \
 proper academic credit to the author :\
-\>", "Text",ExpressionUUID->"743e5bef-fd56-460c-bee8-7bafe9434b12"],
-
-Cell[BoxData[
- RowBox[{
-  TagBox[
-   ButtonBox[
-    PaneSelectorBox[{False->
-     PaneSelectorBox[{False->
-      TagBox["\<\"Product of irreducible representations for SU(n)\"\>",
-       StatusArea[#, "cdf file tensorProdIrrep"]& ,
-       TagBoxNote->"cdf file tensorProdIrrep"], True->
-      TagBox["\<\"Product of irreducible representations for SU(n)\"\>",
-       StatusArea[#, "cdf file tensorProdIrrep"]& ,
-       TagBoxNote->"cdf file tensorProdIrrep"]}, Dynamic[
-       CurrentValue["MouseOver"]],
-      BaseStyle->{"Hyperlink"},
-      FrameMargins->0,
-      ImageSize->Automatic], True->
-     StyleBox[
-      PaneSelectorBox[{False->
-       TagBox["\<\"Product of irreducible representations for SU(n)\"\>",
-        StatusArea[#, "cdf file tensorProdIrrep"]& ,
-        TagBoxNote->"cdf file tensorProdIrrep"], True->
-       TagBox["\<\"Product of irreducible representations for SU(n)\"\>",
-        StatusArea[#, "cdf file tensorProdIrrep"]& ,
-        TagBoxNote->"cdf file tensorProdIrrep"]}, Dynamic[
-        CurrentValue["MouseOver"]],
-       BaseStyle->{"Hyperlink"},
-       FrameMargins->0,
-       ImageSize->Automatic], "HyperlinkActive"]}, Dynamic[
-      CurrentValue["MouseOver"]],
-     BaseStyle->{"Hyperlink"},
-     FrameMargins->0,
-     ImageSize->Automatic],
-    BaseStyle->"Hyperlink",
-    ButtonData->{
-      URL["http://www.cpt.univ-mrs.fr/~coque/tensorProdIrrep.cdf"], None},
-    ButtonNote->"http://www.cpt.univ-mrs.fr/~coque/tensorProdIrrep.cdf"],
-   Annotation[#, "http://www.cpt.univ-mrs.fr/~coque/tensorProdIrrep.cdf", 
-    "Hyperlink"]& ], "//", "FullForm"}]], "Input",ExpressionUUID->"4dccc783-\
-32e0-484b-ae71-69746534f0ec"],
-
-Cell[BoxData[
- TagBox[
-  StyleBox[
-   RowBox[{"Hyperlink", "[", 
-    RowBox[{
-     RowBox[{"Mouseover", "[", 
-      RowBox[{
-       RowBox[{"StatusArea", "[", 
-        RowBox[{
-        "\"\<Product of irreducible representations for SU(n)\>\"", ",", 
-         "\"\<cdf file tensorProdIrrep\>\""}], "]"}], ",", 
-       RowBox[{"StatusArea", "[", 
-        RowBox[{
-        "\"\<Product of irreducible representations for SU(n)\>\"", ",", 
-         "\"\<nb file tensorProdIrrep\>\""}], "]"}], ",", 
-       RowBox[{"Rule", "[", 
-        RowBox[{"BaseStyle", ",", 
-         RowBox[{"List", "[", "\"\<Hyperlink\>\"", "]"}]}], "]"}], ",", 
-       RowBox[{"Rule", "[", 
-        RowBox[{"FrameMargins", ",", "0"}], "]"}], ",", 
-       RowBox[{"Rule", "[", 
-        RowBox[{"ImageSize", ",", "Automatic"}], "]"}]}], "]"}], ",", 
-     "\"\<http://www.cpt.univ-mrs.fr/~coque/Computer_programs/nb/\
-tensorProdIrrep.nb\>\"", ",", 
-     RowBox[{"Rule", "[", 
-      RowBox[{
-      "ButtonNote", ",", 
-       "\"\<http://www.cpt.univ-mrs.fr/~coque/Computer_programs/nb/\
-tensorProdIrrep.nb\>\""}], "]"}]}], "]"}],
-   ShowSpecialCharacters->False,
-   ShowStringCharacters->True,
-   NumberMarks->True],
-  FullForm]], "Input",ExpressionUUID->"bdd179ae-bf69-4938-9beb-8be69e979d45"],
+\>", "Text",ExpressionUUID->"00000000-0000-0000-0000-000000000000"],
 
 Cell[TextData[{
  Cell[BoxData[
@@ -822,20 +796,19 @@ Cell[TextData[{
     ButtonNote->"http://www.cpt.univ-mrs.fr/~coque"],
    Annotation[#, "http://www.cpt.univ-mrs.fr/~coque", "Hyperlink"]& ]],
   CellChangeTimes->{3.713765397463574*^9},
-  FontSize->12,ExpressionUUID->"44de4189-90a9-45a0-aa1b-bed525ba50d3"],
- StyleBox["\n",
-  FontSize->12],
+  FontSize->12,ExpressionUUID->"52bfa32f-4bdf-4dcb-85cf-7786e90f2e95"],
+ "\n",
  Cell[BoxData[
   TagBox[
    ButtonBox[
     PaneSelectorBox[{False->
      PaneSelectorBox[{False->
       TagBox["\<\"Product of irreducible representations for SU(n)\"\>",
-       StatusArea[#, "cdf file tensorProdIrrep"]& ,
-       TagBoxNote->"cdf file tensorProdIrrep"], True->
+       StatusArea[#, "Computer_programs"]& ,
+       TagBoxNote->"Computer_programs"], True->
       TagBox["\<\"Product of irreducible representations for SU(n)\"\>",
-       StatusArea[#, "cdf file tensorProdIrrep"]& ,
-       TagBoxNote->"cdf file tensorProdIrrep"]}, Dynamic[
+       StatusArea[#, "Computer_programs"]& ,
+       TagBoxNote->"Computer_programs"]}, Dynamic[
        CurrentValue["MouseOver"]],
       BaseStyle->{"Hyperlink"},
       FrameMargins->0,
@@ -843,11 +816,11 @@ Cell[TextData[{
      StyleBox[
       PaneSelectorBox[{False->
        TagBox["\<\"Product of irreducible representations for SU(n)\"\>",
-        StatusArea[#, "cdf file tensorProdIrrep"]& ,
-        TagBoxNote->"cdf file tensorProdIrrep"], True->
+        StatusArea[#, "Computer_programs"]& ,
+        TagBoxNote->"Computer_programs"], True->
        TagBox["\<\"Product of irreducible representations for SU(n)\"\>",
-        StatusArea[#, "cdf file tensorProdIrrep"]& ,
-        TagBoxNote->"cdf file tensorProdIrrep"]}, Dynamic[
+        StatusArea[#, "Computer_programs"]& ,
+        TagBoxNote->"Computer_programs"]}, Dynamic[
         CurrentValue["MouseOver"]],
        BaseStyle->{"Hyperlink"},
        FrameMargins->0,
@@ -858,21 +831,22 @@ Cell[TextData[{
      ImageSize->Automatic],
     BaseStyle->"Hyperlink",
     ButtonData->{
-      URL["http://www.cpt.univ-mrs.fr/~coque/tensorProdIrrep.cdf"], None},
-    ButtonNote->"http://www.cpt.univ-mrs.fr/~coque/tensorProdIrrep.cdf"],
-   Annotation[#, "http://www.cpt.univ-mrs.fr/~coque/tensorProdIrrep.cdf", 
+      URL["http://www.cpt.univ-mrs.fr/~coque/Computer_programs"], None},
+    ButtonNote->"http://www.cpt.univ-mrs.fr/~coque/Computer_programs/"],
+   Annotation[#, "http://www.cpt.univ-mrs.fr/~coque/Computer_programs", 
     "Hyperlink"]& ]],
-  CellChangeTimes->{3.714287246644162*^9},ExpressionUUID->
-  "29815e4c-0f2f-45d8-9854-d708fb870973"],
+  CellChangeTimes->{
+   3.715318027213398*^9, 3.715318204505127*^9, {3.7153183625296164`*^9, 
+    3.715318369861888*^9}},ExpressionUUID->
+  "4a3bca18-8abc-4bca-abf7-5d6f5296a422"],
  "\n",
  StyleBox["September 2017",
   FontSize->12,
   FontWeight->"Regular"]
-}], "Text",ExpressionUUID->"72d101ad-ab5e-47e6-8ba5-0729f6326527"]
+}], "Text",ExpressionUUID->"00000000-0000-0000-0000-000000000000"]
 }, Open  ]]
 },
 WindowSize->{1212, 852},
-WindowMargins->{{114, Automatic}, {Automatic, 0}},
 Visible->True,
 ScrollingOptions->{"VerticalScrollRange"->Fit},
 ShowCellBracket->Automatic,
@@ -894,49 +868,34 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[1486, 35, 408, 11, 42, "Subsection", "ExpressionUUID" -> \
-"d7fba92f-02ab-43e4-917b-5248fd766dbb"],
-Cell[1897, 48, 19520, 441, 497, "Output", "ExpressionUUID" -> \
-"e6cda5a8-d4fc-4356-a7aa-1c16ddb45f32"]
+Cell[1486, 35, 408, 11, 42, "Subsection"],
+Cell[1897, 48, 22618, 489, 520, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[21454, 494, 274, 8, 42, "Subsection", "ExpressionUUID" -> \
-"906349a9-9355-494a-be7f-ca666b87a002"],
-Cell[21731, 504, 178, 3, 30, "Text", "ExpressionUUID" -> \
-"158f5d17-63c8-4909-87b7-87a04abb5a76"]
+Cell[24552, 542, 274, 8, 42, "Subsection"],
+Cell[24829, 552, 178, 3, 30, "Text"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[21946, 512, 274, 8, 42, "Subsection", "ExpressionUUID" -> \
-"682e4d26-7a49-4ec2-bf0d-3ece5811f0d8"],
-Cell[22223, 522, 4742, 108, 159, "Text", "ExpressionUUID" -> \
-"0bca954a-f91d-4788-84f6-3e4757ebb1e6"],
-Cell[26968, 632, 976, 16, 115, "Text", "ExpressionUUID" -> \
-"6dcead3d-b329-45c1-8fde-cce9c14ecc70"]
+Cell[25044, 560, 274, 8, 42, "Subsection"],
+Cell[25321, 570, 4742, 108, 159, "Text"],
+Cell[30066, 680, 976, 16, 115, "Text"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[27981, 653, 274, 8, 42, "Subsection", "ExpressionUUID" -> \
-"3ad5909b-7fa2-4738-b432-625cd539ef7c"],
+Cell[31079, 701, 274, 8, 42, "Subsection"],
 Cell[CellGroupData[{
-Cell[28280, 665, 591, 17, 24, "Print", "ExpressionUUID" -> \
-"c1160743-ce86-422e-87b4-95def800c3dd"],
-Cell[28874, 684, 688, 22, 24, "Print", "ExpressionUUID" -> \
-"d37773d3-14e5-4d87-9e05-ee63a81e62af"]
+Cell[31378, 713, 591, 17, 24, "Print"],
+Cell[31972, 732, 688, 22, 24, "Print"]
 }, Open  ]]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[29611, 712, 275, 8, 42, "Subsection", "ExpressionUUID" -> \
-"df205c75-bae8-4ac2-a6be-5e0c7f4add95"],
-Cell[29889, 722, 192, 3, 30, "Text", "ExpressionUUID" -> \
-"743e5bef-fd56-460c-bee8-7bafe9434b12"],
-Cell[30084, 727, 1656, 38, 34, "Input", "ExpressionUUID" -> \
-"4dccc783-32e0-484b-ae71-69746534f0ec"],
-Cell[31743, 767, 1261, 32, 96, "Input", "ExpressionUUID" -> \
-"bdd179ae-bf69-4938-9beb-8be69e979d45"],
-Cell[33007, 801, 2739, 69, 69, "Text", "ExpressionUUID" -> \
-"72d101ad-ab5e-47e6-8ba5-0729f6326527"]
+Cell[32709, 760, 275, 8, 42, "Subsection"],
+Cell[32987, 770, 192, 3, 30, "Text"],
+Cell[33182, 775, 2731, 70, 69, "Text"]
 }, Open  ]]
 }
 ]
 *)
 
-(* NotebookSignature JwDe25NBCmXM3BKT0Wf2Ab56 *)
+(* End of internal cache information *)
+
+(* NotebookSignature 1vTTGmyHRY@rUBgv9#E5jyDE *)
