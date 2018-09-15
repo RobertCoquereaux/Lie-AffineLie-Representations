@@ -3,6 +3,7 @@
 (* ::Text:: *)
 (*Sympol$Package: a Mathematica package for symmetric polynomials (general, Jack, Schur, zonal, etc.)*)
 (*Version 1.0 (September 8, 2018)*)
+(*Version 1.1 (September 13, 2018)*)
 (*Robert Coquereaux*)
 (**)
 (*See the documentation (usage and examples)  in the companion file  SymPol$Examples.nb*)
@@ -391,14 +392,16 @@ jackBprodden[kap_,subkap_,$\[Alpha]]:=Module[{},Product[jackBcoef[kap,subkap,sub
 betacoef[lambda_,mu_,$\[Alpha]]:=jackBprodnum[lambda,mu,$\[Alpha]]/jackBprodden[lambda,mu,$\[Alpha]]
 skewweight[lis1_,lis2_]:=Total[lis1]-Total[lis2]
 (* Start the  recurrence -- boundary values -- : *)
-JackPolJ[kap_,{},$\[Alpha]]:=1
+JackPolJ[kap_,{},$\[Alpha]]:=0
+JackPolJ[{},{x__},$\[Alpha]]:=1
 JackPolJ[{0},{x__},$\[Alpha]]:=1
 JackPolJ[{1},{x__},$\[Alpha]]:=Total[{x}]
 JackPolJ[{2},{x__},$\[Alpha]]:=(Total[{x}]^2-Total[{x}^2]) +(1+$\[Alpha])Total[{x}^2] //Expand (* is this used  ? *)
 JackPolJ[{k_?IntegerQ},{x_},$\[Alpha]]:=x^k Product[(1+s $\[Alpha]),{s,1,k-1}]
 JackPolJ[lambda_,{x__},$\[Alpha]]:= Once[Together[If[Length[lambda]> Length[{x}],0,
 Sum[JackPolJ[mu,Most[{x}],$\[Alpha]]Last[{x}]^skewweight[lambda,mu] * betacoef[lambda,mu,$\[Alpha]],{mu,horizontalStripSkewPartitions[lambda]}]]]]
-JackPolJ[\[Kappa]_]:=JackPolJ[\[Kappa]]=Once[JackPolJ[restrictPartition[\[Kappa]],makevariables[$x,Length[\[Kappa]]],$\[Alpha]]]
+(* JackPolJ[\[Kappa]_]:=JackPolJ[\[Kappa]]=Once[JackPolJ[restrictPartition[\[Kappa]],makevariables[$x,Length[\[Kappa]]],$\[Alpha]]]*)
+JackPolJ[\[Kappa]_]:=JackPolJ[\[Kappa]]=JackPolJ[restrictPartition[\[Kappa]],makevariables[$x,Length[\[Kappa]]],$\[Alpha]]
 (* Other normalizations of Jack polynomials (one first determines JackPolJ which is the normalization J (for James))*)
 JackPolP[lambda_,{x___},$\[Alpha]]:=JackPolP[lambda,{x},$\[Alpha]]=JackPolJ[lambda,{x},$\[Alpha]]/ptojcoef[lambda,$\[Alpha]]
 JackPolP[\[Kappa]_] :=JackPolP[\[Kappa]] = JackPolJ[\[Kappa]] /ptojcoef[\[Kappa],$\[Alpha]]
@@ -672,14 +675,32 @@ toSchur::usage="toSchur[f], where f is a multivariate symmetric polynomial in $x
 
 
 Begin["`Private`"];
-toSchurSymPolSA[f_] := 
- Module[{var = Variables[f], nbvar, deg, li, part, basis, len, a, sol}, nbvar = Length[var]; 
-  deg = Max[Cases[CoefficientRules[f], v_?VectorQ :> Total[v], 2]]; 
-  part = ExtendedYoungPartitions[deg, nbvar]; 
-  basis = listOfSchurPol[deg, nbvar]; 
-  len = Length[basis];
-  sol = SolveAlways[f == Sum[a[i] basis[[i]],{i,1,len}], var];
-  (Table[a[i], {i, 1, len}] /. Flatten[sol]). $s/@part]
+toSchurSymPolSA[f_]:=
+Module[{var=Variables[f],nbvar,deg,part,basis,len,a,sol},
+nbvar=Length[var];
+deg=Max[Cases[CoefficientRules[f],v_?VectorQ:>Total[v],2]];
+part=ExtendedYoungPartitions[deg,nbvar];
+basis=listOfSchurPol[deg,nbvar];
+len=Length[basis];
+sol=SolveAlways[f==Sum[a[i]basis[[i]],{i,1,len}],var];
+If[sol =={}, toSchurSymPolGeneral[f],
+(Table[a[i],{i,1,len}]/.Flatten[sol]).($s/@part)]]
+(* if f is homogeneous, sol is not empty. 
+If f is not homogeneous, sol will be empty and we call toSchurSymPolGeneral  *)
+
+toSchurSymPolGeneral[f_]:=
+Module[{var=Variables[f],nbvar,deg,li,li1,li2,zbli2,part,basis},
+nbvar=Length[var];
+deg=Max[Cases[CoefficientRules[f],v_?VectorQ:>Total[v],2]];
+part=ExtendedYoungPartitions[deg,nbvar];
+basis=listOfSchurPol[deg,nbvar];
+li=PolynomialReduce[f,basis,var];
+li1=li[[1]];
+li2=li[[2]];
+zbli2=toSchur[li2];
+If[zbli2 === li2, Return[li1.ZJ/@part+li2], li1.$s/@part+zbli2]
+](* this works even if f is not homogeneous. It is called, if needed, by toSchurSymPolSA *)
+  
 toSchur=toSchurSymPolSA (* renaming *)
 End[];
 
@@ -931,12 +952,31 @@ toZonalP::usage="toZonalP[f] where f is a multivariate symmetric polynomial in $
 
 
 Begin["`Private`"];
-toZonalSymPolSA[f_]:=Module[{var=Variables[f],nbvar,deg,li,part,basis,len,a,sol},
-nbvar=Length[var];deg=Max[Cases[CoefficientRules[f],v_?VectorQ:>Total[v],2]];part=ExtendedYoungPartitions[deg,nbvar];
+toZonalSymPolSA[f_]:=Module[{var=Variables[f],nbvar,deg,part,basis,len,a,sol},
+nbvar=Length[var];
+deg=Max[Cases[CoefficientRules[f],v_?VectorQ:>Total[v],2]];
+part=ExtendedYoungPartitions[deg,nbvar];
 basis=listOfZonalPolJ[deg,nbvar];
 len=Length[basis];
 sol=SolveAlways[f==Sum[a[i]basis[[i]],{i,1,len}],var];
-(Table[a[i],{i,1,len}]/.Flatten[ sol]).(ZJ/@ExtendedYoungPartitions[deg,nbvar])]
+If[sol =={}, toZonalSymPolGeneral[f],
+(Table[a[i],{i,1,len}]/.Flatten[sol]).(ZJ/@part)]]
+(* if f is homogeneous, sol is not empty. 
+If f is not homogeneous, sol will be empty and we call toZonalSymPolGeneral  *)
+
+toZonalSymPolGeneral[f_]:=
+Module[{var=Variables[f],nbvar,deg,li,li1,li2,zbli2,part,basis},
+nbvar=Length[var];
+deg=Max[Cases[CoefficientRules[f],v_?VectorQ:>Total[v],2]];
+part=ExtendedYoungPartitions[deg,nbvar];
+basis=listOfZonalPolJ[deg,nbvar];
+li=PolynomialReduce[f,basis,var];
+li1=li[[1]];
+li2=li[[2]];
+zbli2=toZonalJ[li2];
+If[zbli2 === li2, Return[li1.ZJ/@part+li2], li1.ZJ/@part+zbli2]
+](* this works even if f is not homogeneous. It is called, if needed, by toZonalSymPolSA *)
+
 toZonalJ=toZonalSymPolSA; (* renaming *)
 toZonalC[f_]:= ZXtoZC[toZonalJ[f]]
 toZonalP[f_]:= ZXtoZP[toZonalJ[f]]
@@ -1329,6 +1369,89 @@ MacdonaldScalarProduct[any1_,any2_,$x,alpha_]:=scalarProductViaIntegral[any1,any
 scalarProductForSchurViaSeries[xpol1_, xpol2_]:= Module[{var1=Variables[xpol1],var2=Variables[xpol2],n},
 n= Max[Length[var1],Length[var2]];
 (1/n!) SeriesCoefficient[ExpandAll[xpol1*bar[xpol2]* Delta[$x,n,1]],##]&@@ Sequence[Table[{$x[j],0,0},{j,1,n}]] ]
+End[];
+
+
+(* ::Section::Closed:: *)
+(*SUn case*)
+
+
+(* ::Subsection::Closed:: *)
+(*Schur magic SU3*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*Usage*)
+
+
+HornFull::usage="The command HornFull[\[Alpha],\[Beta]] defines the Horn polytope.
+Arguments are extended partitions of length 3 (trailing 0's)
+The output is the range of {\[Gamma]1,\[Gamma]2,\[Gamma]3} for given \[Alpha],\[Beta]";
+magicmult::usage="The function magicmult[la, mu, nuc] gives the multiplicity for the SU(3) intertwiner la@mu@nuc - > 1
+Warning: the last argument is nuc, the conjugate of nu (that would be used for la@mu--> nu).
+Arguments are dominant SU(3) weights in the basis of fundamental weights (Dynkin labels)
+The algorithm uses the semi-magic square property for SU(3) multiplicities.";
+SchurProdPairMagicMethod::usage="The triples {{\[Gamma]1,\[Gamma]2,\[Gamma]3}, m} and their multiplicity m, for a given pair (\[Alpha],\[Beta]) of partitions of length 3.
+This function uses both HornFull(on (\[Alpha],\[Beta]))and magicmult (on the Dynkin components associated with {\[Gamma]1,\[Gamma]2,\[Gamma]3}).";
+SU3MultiplicityYoung::usage="SU3MultiplicityYoung[{la1,la2},{mu1,mu2}], where the arguments are Dynkin components of two SU(3) weights la and mu,  give the partitions (together with their multiplicities)
+associated with the highest weights(hw)that appear in the decomposition of the product of the two irreps with hw la and mu.
+See also SU3MultiplicityDynkin.";
+SU3MultiplicityDynkin::usage="SU3MultiplicityDynkin[{la1,la2},{mu1,mu2}], where the arguments are Dynkin components of two SU(3) weights la and mu,  give the Dynkin components (together with their multiplicities)
+  of the highest weights(hw)that appear in the decomposition of the product of the two irreps with hw la and mu. 
+See also SU3MultiplicityYoung.";
+
+
+(* ::Subsubsection::Closed:: *)
+(*Code*)
+
+
+Begin["`Private`"];
+
+HornFull[\[Alpha]_,\[Beta]_]:=
+{{ Max[\[Alpha][[1]]+\[Beta][[3]],\[Alpha][[2]]+\[Beta][[2]],\[Alpha][[3]]+\[Beta][[1]]],\[Alpha][[1]] +\[Beta][[1]] },
+{ Max[\[Alpha][[2]]+\[Beta][[3]],\[Alpha][[3]]+\[Beta][[2]]],Min[\[Alpha][[1]]+\[Beta][[2]],\[Alpha][[2]]+\[Beta][[1]]]},
+{\[Alpha][[3]]+\[Beta][[3]],Min[\[Alpha][[1]]+\[Beta][[3]],\[Alpha][[2]]+\[Beta][[2]],\[Alpha][[3]]+\[Beta][[1]]]}
+}
+
+magicmult[la_,mu_,nuc_]:=
+Module[{irr={la,mu,nuc},irrtra,redirrtra,sig,k,magic1, magic2},
+irrtra=Transpose[irr]; sig=Map[Total,irrtra];
+ k=Abs[sig[[1]]-sig[[2]]]/3; If[Not[IntegerQ[k]],Return[0]];redirrtra=irrtra- If[sig[[1]]>=sig[[2]],{ ConstantArray[k,3],0},{0,  ConstantArray[k,3]}];
+{magic1,magic2}=Map[Total,redirrtra]; 
+Min[Flatten[{redirrtra,ConstantArray[magic1,3]-redirrtra[[1]]-redirrtra[[2]]}]]+1](* magic *)
+
+SchurProdPairMagicMethod[\[Alpha]_,\[Beta]_]:=Module[{la,mu,horngam,gamma1min,gamma1max,gamma2min,gamma2max,\[Gamma]3},
+la={\[Alpha][[1]]-\[Alpha][[2]],\[Alpha][[2]]-\[Alpha][[3]]};mu={\[Beta][[1]]-\[Beta][[2]],\[Beta][[2]]-\[Beta][[3]]};
+horngam=HornFull[\[Alpha],\[Beta]];
+gamma1min= horngam[[1,1]];gamma1max= horngam[[1,2]];gamma2min= horngam[[2,1]];gamma2max= horngam[[2,2]];
+Map[{Take[#,3],Last[#]}& ,DeleteCases[Flatten[Table[
+\[Gamma]3= Total[\[Alpha]]+Total[\[Beta]] - (\[Gamma]1+\[Gamma]2) ;
+{\[Gamma]1,\[Gamma]2,\[Gamma]3,Ramp@magicmult[la,mu,Reverse@{\[Gamma]1-\[Gamma]2,\[Gamma]2- \[Gamma]3}]},
+{\[Gamma]1,gamma1min, gamma1max},{\[Gamma]2,gamma2min,gamma2max}],1],{_,_,_,0},1]]]
+
+SU3MultiplicityYoung[la_,mu_]:=
+Transpose@With[{li=SchurProdPairMagicMethod[{la[[1]]+la[[2]],la[[2]],0},{mu[[1]]+mu[[2]],mu[[2]],0}]},
+With[{n=3},{Map[PadRight[#,n-1]&,Map[SUreductionOnlists[#,n]&,Map[First,li]]],Map[Last,li]}]]
+
+SU3MultiplicityDynkin[la_,mu_]:=With[{finpar=SU3MultiplicityYoung[la,mu]},
+Transpose[{Map[youngPartitionToHighestWeight[#,3]&,Transpose[finpar][[1]]],Transpose[finpar][[2]]}]]
+End[];
+
+
+(* ::Subsection:: *)
+(*Schur using honeycombs SUn To do*)
+
+
+(* ::Subsubsection:: *)
+(*Usage*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*Code*)
+
+
+Begin["`Private`"];
+
 End[];
 
 
