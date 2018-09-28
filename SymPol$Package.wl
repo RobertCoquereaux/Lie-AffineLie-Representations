@@ -4,6 +4,7 @@
 (*Sympol$Package: a Mathematica package for symmetric polynomials (general, Jack, Schur, zonal, etc.)*)
 (*Version 1.0 (September 8, 2018)*)
 (*Version 1.1 (September 13, 2018)*)
+(*Version 1.2 (September 28, 2018)*)
 (*Robert Coquereaux*)
 (**)
 (*See the documentation (usage and examples)  in the companion file  SymPol$Examples.nb*)
@@ -23,7 +24,7 @@
 (*For instance, using version 1.0 (as of sept 2018),  the decomposition on the  basis of zonal polynomials of the square of the 3-variables zonal polynomials associated with the integer partition {2t,t} takes respectively about (0.3s, 4s, 38s, 190s, 590s, 1700s} for t in {1,2, 3,4,5,6}.*)
 (*Such computations may also easily exhaust the available memory.*)
 (*The underlying philosophy was to perform calculations for Jack polynomials and recover the results for Schur, Zonal, etc, as particular cases.*)
-(*Admittedly, for some specific problems (for instance the calculation of structure constants aka Littlewood-Richardson coefficients), and especially in the case of Schur polynomials,  other algorithms, much faster (using honeycombs for instance) do exist.*)
+(*Admittedly, for some specific problems (for instance the calculation of structure constants aka Littlewood-Richardson coefficients), and especially in the case of Schur polynomials,  other algorithms that run much faster (using honeycombs for instance) do exist.*)
 (*Criticisms and suggestions are welcome : send a note to robert.coquereaux@gmail.com*)
 (**)
 
@@ -81,7 +82,7 @@ End[];
 
 monomial::usage="monomial[list] is a monomial in $x[j] variable with powers specifies by list";
 myCompositions::usage="myComposition[n,k]gives a list of all compositions of integer n into k parts";
-ExtendedYoungPartitions::usage="ExtendedYoungPartitions[n,r]gives a list of all extended partitions (trailing zeros) of integer n into k parts.
+ExtendedYoungPartitions::usage="ExtendedYoungPartitions[n,k]gives a list of all extended partitions (trailing zeros) of integer n into k parts.
 The command ExtendedYoungPartitions[n] is equivalent to ExtendedYoungPartitions[n,n]";
 restrictPartition::usage="restrictPartition[list] converts an extended partition (list) to an integer partition, dropping the trailing zeros";
 extendPartition::usage="extendPartition[list] converts an integer partition (list) or an extended partition (list) to an extended partition with a number of trailing zeros such that the length of the new list is equal to the total of the partition.
@@ -312,6 +313,7 @@ powerSum::usage="powerSums[deg,nvar] is the power sum symmetric polynomial (Newt
 elemsymtopow::usage="elemsymtopow[s] converts the elementary symmetric polynomial $e[s] to power-sums symmetric polynomials called $p[j]";
 toPowerSums::usage="toPowerSums[pol] expresses a symmetric polynomial pol, with variables $x[i] in terms of power sums. The latter are denoted $p[j] in output";
 powsym::usage="powsym[list] returns the product of symbols $p[j]";
+algebraicRelationsForPowSum::usage="algebraicRelationsForPowSum[s,nbvar] returns a rule expressing $p[s] in terms of the $p[j], j< nbvar, when the number of $x variables nbvar is smaller than s";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -332,6 +334,8 @@ elemsymtopow[s_]:=((-1)^s/s!)BellCompleteExpPol[Table[-(i-1)!$p[i],{i ,1,s}]]
 toPowerSums[pol_,len_]:= toElementarySymPol[pol,len]/. {$e[z_]:>elemsymtopow[z]}
 toPowerSums[pol_]:= toElementarySymPol[pol]/. {$e[z_]:>elemsymtopow[z]}
 powsym[list_]:= Product[$p[j],{j,list}]
+algebraicRelationsForPowSum[s_,nbvar_]:=If[nbvar<s ,Print["If the number of variables is equal to ", nbvar , " we have the relation: "];
+{Rule[$p[s], powerSum[s,nbvar]//toPowerSums//Simplify]}, {}]
 End[];
 
 
@@ -398,8 +402,11 @@ JackPolJ[{0},{x__},$\[Alpha]]:=1
 JackPolJ[{1},{x__},$\[Alpha]]:=Total[{x}]
 JackPolJ[{2},{x__},$\[Alpha]]:=(Total[{x}]^2-Total[{x}^2]) +(1+$\[Alpha])Total[{x}^2] //Expand (* is this used  ? *)
 JackPolJ[{k_?IntegerQ},{x_},$\[Alpha]]:=x^k Product[(1+s $\[Alpha]),{s,1,k-1}]
-JackPolJ[lambda_,{x__},$\[Alpha]]:= Once[Together[If[Length[lambda]> Length[{x}],0,
+(* JackPolJ[lambda_,{x__},$\[Alpha]]:= Once[Together[If[Length[lambda]> Length[{x}],0,
 Sum[JackPolJ[mu,Most[{x}],$\[Alpha]]Last[{x}]^skewweight[lambda,mu] * betacoef[lambda,mu,$\[Alpha]],{mu,horizontalStripSkewPartitions[lambda]}]]]]
+*)
+JackPolJ[lambda_,{x__},$\[Alpha]]:= JackPolJ[lambda,{x},$\[Alpha]]= Together[If[Length[lambda]> Length[{x}],0,
+Sum[JackPolJ[mu,Most[{x}],$\[Alpha]]Last[{x}]^skewweight[lambda,mu] * betacoef[lambda,mu,$\[Alpha]],{mu,horizontalStripSkewPartitions[lambda]}]]]
 (* JackPolJ[\[Kappa]_]:=JackPolJ[\[Kappa]]=Once[JackPolJ[restrictPartition[\[Kappa]],makevariables[$x,Length[\[Kappa]]],$\[Alpha]]]*)
 JackPolJ[\[Kappa]_]:=JackPolJ[\[Kappa]]=JackPolJ[restrictPartition[\[Kappa]],makevariables[$x,Length[\[Kappa]]],$\[Alpha]]
 (* Other normalizations of Jack polynomials (one first determines JackPolJ which is the normalization J (for James))*)
@@ -527,9 +534,9 @@ JackPtoPowerSum::usage="JackPtoPowerSum[list] gives the Jack polynomial with nor
 
 
 Begin["`Private`"];
-jackJDecompositionP[partition_]:=Expand[jackJDecompositionE[ partition]/. {$e[z_]:>elemsymtopow[z]}]
-jackCDecompositionP[partition_]:=Expand[jackCDecompositionE[ partition]/. {$e[z_]:>elemsymtopow[z]}]
-jackPDecompositionP[partition_]:=Expand[jackPDecompositionE[ partition]/. {$e[z_]:>elemsymtopow[z]}]
+jackJDecompositionP[partition_]:=jackJDecompositionP[partition]=Expand[jackJDecompositionE[ partition]/. {$e[z_]:>elemsymtopow[z]}]
+jackCDecompositionP[partition_]:=jackCDecompositionP[partition]=Expand[jackCDecompositionE[ partition]/. {$e[z_]:>elemsymtopow[z]}]
+jackPDecompositionP[partition_]:=jackPDecompositionP[partition]=Expand[jackPDecompositionE[ partition]/. {$e[z_]:>elemsymtopow[z]}]
 JackJtoPowerSum=jackJDecompositionP;(* renaming *)
 JackCtoPowerSum=jackCDecompositionP;(* renaming *)
 JackPtoPowerSum=jackPDecompositionP;(* renaming *)
@@ -573,6 +580,9 @@ End[];
 toJackPProdPairUsingPowerSums::usage="toJackPProdPairUsingPowerSums[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of JackPolP[li1]*JackPolP[li2] on Jack polynomials (normalization P).
 The arguments (explicit polynomials in the variables $x[j]) are first expressed in terms of power sums, the decomposition is then obtained in a second step. 
 The obtained coefficients depend on the Jack parameter $\[Alpha].";
+toJackJProdPairUsingPowerSums::usage="toJackJProdPairUsingPowerSums[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of JackPolJ[li1]*JackPolJ[li2] on Jack polynomials (normalization J).
+The arguments (explicit polynomials in the variables $x[j]) are first expressed in terms of power sums, the decomposition is then obtained in a second step. 
+The obtained coefficients depend on the Jack parameter $\[Alpha].";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -580,6 +590,7 @@ The obtained coefficients depend on the Jack parameter $\[Alpha].";
 
 
 (* ::Input::Initialization:: *)
+Begin["`Private`"];
 toJackPProdPairUsingPowerSums[li1_,li2_]:= 
 Module[{li,deg1,deg2,deg,yp,pos,goodpart,sol,nbvar,listofZdecompOnPS,JP1,JP2,a,reso,nboft},
 li=li1+li2;nbvar=Length[li1];(* write Warning if length li1 neq length li2 *)
@@ -599,6 +610,10 @@ Solve[!Eliminate[!JP1*JP2==Sum[a[i] listofZdecompOnPS[[i]],{i,1,nboft}],pvar],al
 (Table[a[i],{i,1,pos[[1]]}]/. Flatten[sol]). JP/@goodpart
 ]
 (* The result is a linear combination of JP[partitions] *)
+toJackJProdPairUsingPowerSums[li1_,li2_]:=Module[{li,deg1,deg2,deg,yp,pos,goodpart,sol,nbvar,listofZdecompOnPS,JJ1,JJ2,a,reso,nboft},li=li1+li2;nbvar=Length[li1];deg1=Total[li1];deg2=Total[li2];deg=deg1+deg2;yp=ExtendedYoungPartitions[deg,nbvar];pos=Flatten[Position[Reverse[yp],li]];goodpart=(Take[yp,#1]&)@@(-pos);JJ1=Simplify[JackJtoPowerSum[li1]];JJ2=Simplify[JackJtoPowerSum[li2]];listofZdecompOnPS={};Do[AppendTo[listofZdecompOnPS,JackJtoPowerSum[goodpart[[i]]]],{i,1,pos[[1]]}];nboft=pos[[1]];sol=With[{alis=Table[a[j],{j,1,nboft}],pvar=Table[$p[j],{j,1,nbvar}]},Solve[!Eliminate[!JJ1 JJ2==\!\(
+\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(nboft\)]\(a[i]\ listofZdecompOnPS[\([i]\)]\)\),pvar],alis]];(Table[a[i],{i,1,pos[[1]]}]/. Flatten[sol]).JJ/@goodpart]
+(* The result is a linear combination of JJ[partitions] *)
+End[];
 
 
 (* ::Section::Closed:: *)
@@ -1001,13 +1016,17 @@ End[];
 Begin["`Private`"];
 (* We have to update toPol here because the symbols JackPolJ, JackPolC, JackPolP where not used when toPol was  defined last time *)
 toPol[expr_, nbv_] := 
-  expr /. {$e[n_] :> 
-    SymmetricPolynomial[n, Table[$x[j], {j, 1, nbv}]], 
-      $p[n_] :> Sum[$x[k]^n, {k, nbv}], $m[li_] :> monomialSum[li, $x], 
-      JJ[li_] :> JackPolJ[li], JC[li_] :> JackPolC[li], 
-   JP[li_] :> JackPolP[li], 
-   $s[li_]  :> SchurPol[li], ZJ[li_] :> ZonalPolJ[li], 
-   ZC[li_] :> ZonalPolC[li], ZP[li_] :> ZonalPolP[li]}
+  expr /. {
+$e[n_] :> SymmetricPolynomial[n, Table[$x[j], {j, 1, nbv}]], 
+$p[n_] :> Sum[$x[k]^n, {k, nbv}], 
+$m[li_] :> monomialSum[extendPartition[li,nbv], $x], 
+JJ[li_] :> JackPolJ[extendPartition[li,nbv]], 
+JC[li_] :> JackPolC[extendPartition[li,nbv]], 
+JP[li_] :> JackPolP[extendPartition[li,nbv]], 
+$s[li_]  :> SchurPol[extendPartition[li,nbv]], 
+ZJ[li_] :> ZonalPolJ[extendPartition[li,nbv]], 
+ZC[li_] :> ZonalPolC[extendPartition[li,nbv]], 
+ZP[li_] :> ZonalPolP[extendPartition[li,nbv]]}
 End[];
 
 
@@ -1213,19 +1232,34 @@ End[];
 
 
 (* ::Subsection::Closed:: *)
-(*First inner product (Hall)*)
+(*The Jack inner products*)
 
 
 (* ::Subsubsection::Closed:: *)
 (*Usage*)
 
 
-HallScalarProduct::usage="HallScalarProduct[pol1, pol2, $\[Alpha]] is the Hall scalar product with Jack parameter $\[Alpha] of the two symmetric polynomials pol1 and pol2. It is the renormalized and stabilized version of the n-variables Jack scalar product defined for power sums.
-If pol1 and pol2 are Jack polynomials (Schur, Zonal, etc) and pol1==pol2, the result is obtained (fast) by the commands stableNormSqOfJackJ, stableNormSqOfJackC, stableNormSqOfJackP";
-stableNormSqOfJackJ::usage="stableNormSqOfJackJ[partition] returns HallScalarProduct[JackPolJ[partition], JackPolJ[partition], $\[Alpha]]";
-stableNormSqOfJackC::usage="stableNormSqOfJackC[partition] returns HallScalarProduct[JackPolC[partition], JackPolC[partition], $\[Alpha]]";
-stableNormSqOfJackP::usage="stableNormSqOfJackP[partition] returns HallScalarProduct[JackPolP[partition], JackPolP[partition], $\[Alpha]]";
-
+HallScalarProduct::usage="The name of this command has been changed. See ?JackScalarProduct.";
+stableNormSqOfJackJ::usage="stableNormSqOfJackJ[partition] returns JackScalarProduct[JackPolJ[partition], JackPolJ[partition],Infinity, $\[Alpha]]";
+stableNormSqOfJackC::usage="stableNormSqOfJackC[partition] returns JackScalarProduct[JackPolC[partition], JackPolC[partition],Infinity, $\[Alpha]]";
+stableNormSqOfJackP::usage="stableNormSqOfJackP[partition] returns JackScalarProduct[JackPolP[partition], JackPolP[partition],Infinity, $\[Alpha]]";
+JackScalarProduct::usage="JackScalarProduct is used to return the Jack scalar product <pol1, pol2>_alpha, with parameter alpha, of two symmetric functions pol1 and pol2 (see the syntax below).
+Distinct values of alpha define distinct scalar products.  When alpha=1 it coincides with the Hall scalar product. 
+The Jack scalar product (for some chosen parameter alpha) is simply defined when its arguments are power sums labelled by partitions; 
+its definition is then extended to the vector space of symmetric functions (symmetric polynomials with an infinite number of variables),
+in particular there should be no algebraic relations between power sums indexed by distinct partitions.
+It can be thought as a renormalized and stabilized version (infinitely many variables) of an n-variables inner product.
+If pol1 and pol2 are explicit expressions written in terms of power sums, one should use the syntax JackScalarProduct[pol1,pol2,$p, alpha].
+If pol1 and pol2 are explicit polynomials in the variables $x, one should use the syntax JackScalarProduct[pol1, pol2, $x, alpha]; in this case pol1 and pol2 are automatically converted to power sums by the function toPowerSums.
+In order to obtain the Jack scalar product with parameter alpha of two zonal, Schur, or, more generally Jack polynomials (with a parameter $\[Alpha] that can be distinct from alpha),
+one should use the syntax JackScalarProduct[Pol1[lambda], Pol2[mu], Infinity, alpha]. 
+Warning : JackScalarProduct has the attribute HoldAll, the polynomials Pol1[lambda] and Pol2[mu] where lambda and mu are two partitions, are not evaluated in terms of the finite number of variables $x[j] usually dictated by the expressions of lambda and mu as extended partitions (this information is ignored);
+rather, they are calculated for a number of variables equal to the weight (total) of the partitions, and then converted to power sums. 
+Being computed with enough $x variables, the obtained power sums are stabilized expressions allowing for the final determination of JackScalarProduct.
+The same considerations apply to the calculation of < pol1 * pol2, pol3 >_alpha where pol1, pol2, pol3 are zonal, Schur or Jack polynomials; one should then use the syntax: JackScalarProduct[Pol1[lambda1]* Pol2[lambda2], Pol3[mu],Infinity, alpha].
+Jack polynomials with parameter $\[Alpha] (and normalisation J, P or C) are orthogonal for the Jack scalar product with the same parameter alpha = $\[Alpha], but they are not orthonormal in general. 
+The $s[lambda], ie, the Schur case, or equivalently JackP with $\[Alpha]=1, are orthonormal for the Jack scalar product with parameter alpha=1 (Hall scalar product).
+If pol1 and pol2 are Jack polynomials (Schur, Zonal, etc) and pol1==pol2, the result, a squared norm, is obtained (fast) by the commands stableNormSqOfJackJ, stableNormSqOfJackC, stableNormSqOfJackP";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1265,16 +1299,16 @@ renormScalProdJackOnPS[uu_,v_, alpha_]:=renormScalProdJackOnPSexp[Expand@uu,Expa
 
 SetAttributes[HallScalarProduct, HoldAll]
 
-HallScalarProduct[aPol_[lam_], aPol_[mu_], alpha_] :=
- renormScalProdJackOnPS[toPowerSums[aPol[extendPartition[lam]]], 
-  toPowerSums[aPol[extendPartition[mu]]], alpha]
+(* HallScalarProduct[aPol1_[lam_], aPol2_[mu_], alpha_] :=
+ renormScalProdJackOnPS[toPowerSums[aPol1[extendPartition[lam]]], 
+  toPowerSums[aPol2[extendPartition[mu]]], alpha]
 
-HallScalarProduct[aPol_[lam1_]*aPol_[lam2_], aPol_[mu_], alpha_] :=
+HallScalarProduct[aPol1_[lam1_]*aPol2_[lam2_], aPol3_[mu_], alpha_] :=
  renormScalProdJackOnPS[
-  toPowerSums[aPol[extendPartition[lam1]]]*
-   toPowerSums[aPol[extendPartition[lam2]]], 
-  toPowerSums[aPol[extendPartition[mu]]], alpha]
-
+  toPowerSums[aPol1[extendPartition[lam1]]]*
+   toPowerSums[aPol2[extendPartition[lam2]]], 
+  toPowerSums[aPol3[extendPartition[mu]]], alpha]
+  
 HallScalarProduct[s_ uu_, v_, alpha_] := 
   s HallScalarProduct[uu, v, alpha] /; FreeQ[s, $p];
 HallScalarProduct[uu_, s_ v_, alpha_] := 
@@ -1288,7 +1322,44 @@ HallScalarProduct[uu_, v1_ + v2_, alpha_] :=
   HallScalarProduct[uu, v1, alpha] + HallScalarProduct[uu, v2, alpha];
 HallScalarProduct[uu_, v1_ - v2_, alpha_] := 
   HallScalarProduct[uu, v1, alpha] - HallScalarProduct[uu, v2, alpha];
+  *)
   
+  SetAttributes[JackScalarProduct, HoldAll]
+  
+JackScalarProduct[aPol1_[lam_], aPol2_[mu_], Infinity, beta_] :=
+ renormScalProdJackOnPS[
+toPowerSums[aPol1[extendPartition[lam]]], 
+  toPowerSums[aPol2[extendPartition[mu]]], beta]
+  
+JackScalarProduct[aPol1_[lam1_]*aPol2_[lam2_], aPol3_[mu_],Infinity, beta_] :=
+ renormScalProdJackOnPS[
+  toPowerSums[aPol1[extendPartition[lam1]]]*
+   toPowerSums[aPol2[extendPartition[lam2]]], 
+  toPowerSums[aPol3[extendPartition[mu]]], beta]
+
+JackScalarProduct::jackscalproWarning = "This is maybe not what you want: you are enforcing a finite number of variables. 
+In order to obtain the Jack inner product, use the syntax  JackScalarProduct[`1`[`2`], `3`[`4`], Infinity, `5`] instead.";
+
+JackScalarProduct[aPol1_[la_], aPol2_[mu_], $x,beta_]:=
+Module[{},
+Message[JackScalarProduct::jackscalproWarning,aPol1,restrictPartition[la],aPol2,restrictPartition[mu],beta];
+renormScalProdJackOnPS[toPowerSums[aPol1[la]], toPowerSums[aPol2[mu]], beta]]
+      
+JackScalarProduct[aPolx1_, aPolx2_, $x,beta_] :=
+ renormScalProdJackOnPS[toPowerSums[aPolx1], toPowerSums[aPolx2], beta]
+ 
+JackScalarProduct[aPolp1_, aPolp2_,$p, beta_] :=
+ renormScalProdJackOnPS[aPolp1, aPolp2, beta]
+ 
+ JackScalarProduct[u1_ + u2_, v_, any_ ,beta_] := 
+  JackScalarProduct[u1, v, any,beta] + JackScalarProduct[u2, v, any, beta];
+JackScalarProduct[u1_ - u2_, v_,any_, beta_] := 
+  JackScalarProduct[u1, v,  any, beta] - JackScalarProduct[u2, v,  any, beta];
+JackScalarProduct[uu_, v1_ + v2_, any_, beta_] := 
+  JackScalarProduct[uu, v1, any,  beta] + JackScalarProduct[uu, v2, any,  beta];
+JackScalarProduct[uu_, v1_ - v2_, any_,beta_] := 
+  JackScalarProduct[uu, v1, any,  beta] - JackScalarProduct[uu, v2,  any, beta];
+ 
 End[];
 
 
@@ -1305,9 +1376,9 @@ The kernel Delta is the product of the (1- x[i]/x[j])^(1/$\[Alpha]). MacdonaldSc
 This command, acting on two polynomials xpol1, xpol2, defined, not as explicit polynomials in variables x[j], but as a linear combinations of Jack, Zonal, or Schur (symbols JX, ZX, $s, with X = J, C, or P) calculates the scalar product without actually performing any integral, and it is quite fast.
 When xpol1 and xpol2 are explicitly given as multivariate polynomials in the n variables $x[j_], one has to use the syntax MacdonaldScalarProduct[xpol1,xpol2,$x,$\[Alpha]]; in that case a definite n-dimensional integral is calculated, and this is usually slow.
 When $\[Alpha] = 1 the calculation can also be performed by selecting the constant term in the Laurent series of (xpol1 * bar(xpol2) * Delta[x,n,$\[Alpha]]); if xpol1 and xpol2 are explicitly given as polynomials in the variables $x[j] it is then better to use the command scalarProductForSchurViaSeries[xpol1, xpol2]. 
-The scalar product between two Jack polynomials increases to infinity with the number of variables, but its renormalized version (rescaled by 1/Dyson coefficient) goes to a finite limit equal to the the Hall inner product HallScalarProduct[pol1, pol2, $\[Alpha]]. See usage ?coefDyson."; 
+The scalar product between two Jack polynomials increases to infinity with the number of variables, but its renormalized version (rescaled by 1/Dyson coefficient) goes to a finite limit equal to the the Jack inner product JackScalarProduct[pol1, pol2,Infinity, $\[Alpha]]. See usage ?coefDyson."; 
 coefDyson::usage="coefDyson[n,$\[Alpha]] is a coefficient that relates the Macdonald inner product MacdonaldScalarProduct, when the number of variables n goes to infinity, to the Hall inner product.  
-HallScalarProduct[U,V,$\[Alpha]] = Limit_{n -> Infinity} MacdonaldScalarProduct[U,V,$\[Alpha]] / coefDyson[n,$\[Alpha]].
+JackScalarProduct[U,V,Infinity,$\[Alpha]] = Limit_{n -> Infinity} MacdonaldScalarProduct[U,V,$\[Alpha]] / coefDyson[n,$\[Alpha]].
 The Dyson coefficient is equal to MacdonaldScalarProduct[1,1,$\[Alpha]], ie., to 1/n! * (Integral over n-torus of Delta[x,n,$\[Alpha]]) and therefore to Gamma[1 + n/$\[Alpha]]/(n!*Gamma[1 + $\[Alpha]^(-1)]^n).";
 scalarProductForSchurViaSeries::usage="scalarProductForSchurViaSeries[xpol1, xpol2] where xpol1 and xpol2 are explicit multivariate polynomials in x[j], gives MacdonaldScalarProduct[xpol1, xpol2,$x,1], i.e. the inner product in the Schur case($\[Alpha]=1). 
 It is not calculated as an integral but by selecting the constant term in the Laurent series of (xpol1 * bar(xpol2) * Delta[x,n,1]). See comments about speed in ?MacdonaldScalarProduct";
@@ -1438,7 +1509,7 @@ Transpose[{Map[youngPartitionToHighestWeight[#,3]&,Transpose[finpar][[1]]],Trans
 End[];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Schur using honeycombs SUn To do*)
 
 
