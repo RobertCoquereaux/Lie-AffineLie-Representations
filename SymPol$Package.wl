@@ -5,6 +5,7 @@
 (*Version 1.0 (September 8, 2018)*)
 (*Version 1.1 (September 13, 2018)*)
 (*Version 1.2 (September 28, 2018)*)
+(*Version 1.3 (December 18, 2018)*)
 (*Robert Coquereaux*)
 (**)
 (*See the documentation (usage and examples)  in the companion file  SymPol$Examples.nb*)
@@ -20,9 +21,7 @@
 (*Caveats*)
 (*The functions defined in this package are usually not protected against the use of incorrect arguments.*)
 (*If an input does not follow the syntax precisely described in the usage command, strange (and incorrect) results can appear.*)
-(*Some commands may take a lot of time :  *)
-(*For instance, using version 1.0 (as of sept 2018),  the decomposition on the  basis of zonal polynomials of the square of the 3-variables zonal polynomials associated with the integer partition {2t,t} takes respectively about (0.3s, 4s, 38s, 190s, 590s, 1700s} for t in {1,2, 3,4,5,6}.*)
-(*Such computations may also easily exhaust the available memory.*)
+(*Some commands may take a lot of time and large computations may easily exhaust the available memory.*)
 (*The underlying philosophy was to perform calculations for Jack polynomials and recover the results for Schur, Zonal, etc, as particular cases.*)
 (*Admittedly, for some specific problems (for instance the calculation of structure constants aka Littlewood-Richardson coefficients), and especially in the case of Schur polynomials,  other algorithms that run much faster (using honeycombs for instance) do exist.*)
 (*Criticisms and suggestions are welcome : send a note to robert.coquereaux@gmail.com*)
@@ -87,6 +86,7 @@ The command ExtendedYoungPartitions[n] is equivalent to ExtendedYoungPartitions[
 restrictPartition::usage="restrictPartition[list] converts an extended partition (list) to an integer partition, dropping the trailing zeros";
 extendPartition::usage="extendPartition[list] converts an integer partition (list) or an extended partition (list) to an extended partition with a number of trailing zeros such that the length of the new list is equal to the total of the partition.
 extendPartition[list,len] converts an integer partition or an extended partition to an extended partition of length (len)";
+myModPartition::usage="myModPartition[list] reduces the partition list mod {1,1,...1} keeping the length";
 highestWeightToReverseColumns::usage="";
 highestWeightToYoungPartition::usage="If list is the list (of length n-1) of components of a dominant weight of SU(n) in the Dynkin basis (basis of fundamental weights)
 highestWeightToYoungPartition[list] returns the corresponding (Young) partition (possibly extended) of length n-1. The lengths of both lists are the same.";
@@ -118,9 +118,11 @@ myCompositions[n_Integer,k_Integer]:=((#1[[2]]-#1[[1]]-1&)/@Partition[Join[{0},#
 ExtendedYoungPartitions[nbox_,nrow_]:=Map[PadRight[#,nrow]&,IntegerPartitions[nbox,nrow]]
 ExtendedYoungPartitions[nbox_]:=ExtendedYoungPartitions[nbox,nbox]
 restrictPartition[{0}]={0};
+restrictPartition[{Repeated[0]}]={0};
 restrictPartition[lis_]:=Module[{strictpart=lis},While[Last@strictpart==0,strictpart=Most@strictpart];strictpart]
 extendPartition[lis_]:= PadRight[#,Total[lis]]&[restrictPartition[lis]]
 extendPartition[lis_, nvar_]:= PadRight[#,nvar]&[restrictPartition[lis]]
+myModPartition[li_]:= Module[{val=li}, val-= Last[val]](* assumes that li is a partition, the smallest component is the last *)
 highestWeightToReverseColumns[w_]:=Table[Table[i,{w[[i]]}],{i,1,Length[w]}](* Warning: column sizes are from the end to the beginning *)
 highestWeightToYoungPartition[w_?IntegerQ]:=w 
 (* w being usually a list of integers I do not remember why this particular definition where w is an integer should be useful ? *)
@@ -347,7 +349,11 @@ End[];
 (*Usage*)
 
 
-toPol::usage="toPol[ex,nb] where ex is an expression involving $x[j], $e[j], $p[j], $m[list], etc. converts this expression to an explicit polynomial in the nb variables $x[j]"; 
+toPolbasic::usage="toPolbasic[ex,nb] where ex is an expression involving $x[partition], $e[partition], $p[partition], $m[partition], $s[partition], JP[partition], ZP[partition], QP[partition], etc. converts this expression to an explicit polynomial in the nb variables $x[j].
+In practice one should use toPol rather than toPolbasic: usually the former first simplifies the argument (a simplified shifted partition) before calling the latter. "; 
+
+toPol::usage="toPolbasic[ex,nb] where ex is an expression involving $x[partition], $e[partition], $p[partition], $m[partition], $s[partition], JP[partition],ZP[partition], QP[partition], etc. converts this expression to an explicit polynomial in the nb variables $x[j]. 
+toPol[ex,nb] applies toPolbasic to the expression ex after having simplified the given partition (it produces a simplified shifted partition) before calling  toPolbasic).";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -355,8 +361,8 @@ toPol::usage="toPol[ex,nb] where ex is an expression involving $x[j], $e[j], $p[
 
 
 Begin["`Private`"];
-toPol[0]=0;
-toPol[expr_,nbv_]:=expr /. {$e[n_]:>SymmetricPolynomial[n,Table[$x[j],{j,1,nbv}]], $p[n_]:>Sum[$x[k]^n,{k,nbv}], $m[li_]:>monomialSum[li,$x], $s[li_] :> SchurPol[li],
+toPolbasic[0]=0;
+toPolbasic[expr_,nbv_]:=expr /. {$e[n_]:>SymmetricPolynomial[n,Table[$x[j],{j,1,nbv}]], $p[n_]:>Sum[$x[k]^n,{k,nbv}], $m[li_]:>monomialSum[li,$x], $s[li_] :> SchurPol[li],
 ZJ[li_] :> ZonalPolJ[li], ZC[li_] :> ZonalPolC[li], ZP[li_] :> ZonalPolP[li]}
 End[];
 
@@ -559,8 +565,8 @@ End[];
 
 
 Begin["`Private`"];
-(* We have to update toPol here because the symbols JackPolJ, JackPolC, JackPolP where not used when toPol was first defined *)
-toPol[expr_, nbv_] := 
+(* We have to update toPolbasic here because the symbols JackPolJ, JackPolC, JackPolP where not used when toPolbasic was first defined *)
+toPolbasic[expr_, nbv_] := 
   expr /. {$e[n_] :> 
     SymmetricPolynomial[n, Table[$x[j], {j, 1, nbv}]], 
       $p[n_] :> Sum[$x[k]^n, {k, nbv}], $m[li_] :> monomialSum[li, $x], 
@@ -736,8 +742,8 @@ End[];
 
 
 Begin["`Private`"];
-(* We have to update toPol here because the symbols JackPolJ, JackPolC, JackPolP where not used when toPol was  defined last time *)
-toPol[expr_, nbv_] := 
+(* We have to update toPolbasic here because the symbols JackPolJ, JackPolC, JackPolP where not used when toPolbasic was  defined last time *)
+toPolbasic[expr_, nbv_] := 
   expr /. {$e[n_] :> 
     SymmetricPolynomial[n, Table[$x[j], {j, 1, nbv}]], 
       $p[n_] :> Sum[$x[k]^n, {k, nbv}], $m[li_] :> monomialSum[li, $x], 
@@ -764,7 +770,7 @@ Calculations are not fast. However the method can be adapted immediately to othe
 
 toSchurProdPair::usage="toSchurProdPair[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of SchurPol[li1]*SchurPol[li2] on Schur polynomials.
  The method uses explicit polynomials in the variables $x[j]. 
-toSchurProdPair[li1,li2] gives the same result as toSchur[SchurPol[li1]*SchurPol[li2]] but the first method is usually faster.See also toSchurProdPairUsingPowerSums. 
+toSchurProdPair[li1,li2] gives the same result as toSchur[SchurPol[li1]*SchurPol[li2]] but the first method is usually faster. toSchurProdPair is superseded by toSchurProductPair. See also toSchurProdPairUsingPowerSums. 
 For a fast technique, one should use honeycombs (another package).";
 toSchurProdPairUsingPowerSums::usage="toSchurProdPairUsingPowerSums[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of SchurPol[li1]*SchurPol[li2] on Schur polynomials. 
 toSchurProdPairUsingPowerSums[li1,li2] gives the same result as toSchur[SchurPol[li1]*SchurPol[li2]] but the first method is usually faster
@@ -1014,8 +1020,8 @@ End[];
 
 
 Begin["`Private`"];
-(* We have to update toPol here because the symbols JackPolJ, JackPolC, JackPolP where not used when toPol was  defined last time *)
-toPol[expr_, nbv_] := 
+(* We have to update toPolbasic here because the symbols JackPolJ, JackPolC, JackPolP where not used when toPolbasic was  defined last time *)
+toPolbasic[expr_, nbv_] := 
   expr /. {
 $e[n_] :> SymmetricPolynomial[n, Table[$x[j], {j, 1, nbv}]], 
 $p[n_] :> Sum[$x[k]^n, {k, nbv}], 
@@ -1070,14 +1076,14 @@ End[];
 
 
 toZonalJProdPair::usage="toZonalJProdPair[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of ZonalPolJ[li1]*ZonalPolJ[li2] on zonal polynomials (normalization J).
-The method uses explicit polynomials in the variables $x[j]. 
+The method uses explicit polynomials in the variables $x[j]. toZonalJProdPair is superseded by toZonalJProductPair.
 toZonalJProdPair[li1,li2] gives the same result as toZonalJ[ZonalPolJ[li1]*ZonalPolJ[li2]] but the first method is usually faster";
 toZonalCProdPair::usage="toZonalCProdPair[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of ZonalPolC[li1]*ZonalPolC[li2] on zonal polynomials (normalization C).
-The method uses explicit polynomials in the variables $x[j]. 
+The method uses explicit polynomials in the variables $x[j].  toZonalCProdPair is superseded by toZonalCProductPair.
 toZonalCProdPair[li1,li2] gives the same result as toZonalC[ZonalPolC[li1]*ZonalPolC[li2]] but the first method is usually faster";
 toZonalPProdPair::usage="toZonalPProdPair[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of ZonalPolP[li1]*ZonalPolP[li2] on zonal polynomials (normalization P).
-The method uses explicit polynomials in the variables $x[j]. 
-toZonalPProdPair[li1,li2] gives the same result as toZonalP[ZonalPolP[li1]*ZonalPolP[li2]] but the first method is usually faster";
+The method uses explicit polynomials in the variables $x[j]. toZonalPProdPair is superseded by toZonalPProductPair.
+Both give the same result as toZonalP[ZonalPolP[li1]*ZonalPolP[li2]] but toZonalPProductPair is usually faster";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1177,6 +1183,36 @@ End[];
 
 
 (* ::Subsection::Closed:: *)
+(*Convert between normalizations QX for named zonal polynomials QJ, QC, QP*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*Usage*)
+
+
+QXtoQJ::usage="QXtoQJ[expression] converts a sum of zonal polynomials written as QP[partition], for the normalization P, or QC[partition], for the normalization C, to a sum of QJ[partition], written with the normalization J";
+QXtoQC::usage="QXtoQC[expression] converts a sum of zonal polynomials written as QP[partition], for the normalization P, or QJ[partition], for the normalization J, to a sum of QC[partition], written with the normalization C";
+QXtoQP::usage="QXtoQP[expression] converts a sum of zonal polynomials written as QJ[partition], for the normalization J, or QC[partition], for the normalization C, to a sum of QP[partition], written with the normalization P";
+
+
+(* ::Subsubsection::Closed:: *)
+(*Code*)
+
+
+Begin["`Private`"];
+ConsToJames[QC[list_]]:=With[{coef= jtoccoef[list,$\[Alpha]]/.{$\[Alpha]-> 1/2}}, coef*QJ[list]]
+PToJames[QP[list_]]:=With[{coef= 1/ptojcoef[list,$\[Alpha]]/.{$\[Alpha]-> 1/2}}, coef*QJ[list]]
+JamesToCons[QJ[list_]]:=With[{coef=1/jtoccoef[list,$\[Alpha]]/.{$\[Alpha]-> 1/2}}, coef*QC[list]]
+PToCons[QP[list_]]:=With[{coef=1/ptoccoef[list,$\[Alpha]]/.{$\[Alpha]-> 1/2}}, coef*QC[list]]
+JamesToP[QJ[list_]]:=With[{coef= ptojcoef[list,$\[Alpha]]/.{$\[Alpha]-> 1/2}}, coef*QP[list]]
+ConsToP[QC[list_]]:=With[{coef= ptoccoef[list,$\[Alpha]]/.{$\[Alpha]-> 1/2}}, coef*QP[list]]
+QXtoQJ[expression_]:= expression /. {QC[any_]:> ConsToJames[QC[any]], QP[any_]:> PToJames[QP[any]] }
+QXtoQC[expression_]:= expression /. {QJ[any_]:> JamesToCons[QJ[any]], QP[any_]:> PToCons[QP[any]] }
+QXtoQP[expression_]:= expression /. {QJ[any_]:> JamesToP[QJ[any]], QC[any_]:> ConsToP[QC[any]] }
+End[];
+
+
+(* ::Subsection::Closed:: *)
 (*Quaternionic polynomials in terms of monomial symmetric polynomials*)
 
 
@@ -1198,6 +1234,41 @@ End[];
 
 
 (* ::Subsection::Closed:: *)
+(*From named zonal polynomials to explicit polynomials in $x[j]*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*Usage*)
+
+
+ 
+
+
+(* ::Subsubsection::Closed:: *)
+(*Code*)
+
+
+Begin["`Private`"];
+(* We have to update toPolbasic here because the symbols QJ, QC, QP where not used when toPolbasic was  defined last time *)
+toPolbasic[expr_, nbv_] := 
+  expr /. {
+$e[n_] :> SymmetricPolynomial[n, Table[$x[j], {j, 1, nbv}]], 
+$p[n_] :> Sum[$x[k]^n, {k, nbv}], 
+$m[li_] :> monomialSum[extendPartition[li,nbv], $x], 
+JJ[li_] :> JackPolJ[extendPartition[li,nbv]], 
+JC[li_] :> JackPolC[extendPartition[li,nbv]], 
+JP[li_] :> JackPolP[extendPartition[li,nbv]], 
+$s[li_]  :> SchurPol[extendPartition[li,nbv]], 
+ZJ[li_] :> ZonalPolJ[extendPartition[li,nbv]], 
+ZC[li_] :> ZonalPolC[extendPartition[li,nbv]], 
+ZP[li_] :> ZonalPolP[extendPartition[li,nbv]],
+QJ[li_] :> QuaterPolJ[extendPartition[li,nbv]], 
+QC[li_] :>QuaterPolC[extendPartition[li,nbv]], 
+QP[li_] :> QuaterPolP[extendPartition[li,nbv]]}
+End[];
+
+
+(* ::Subsection::Closed:: *)
 (*Structure constants*)
 
 
@@ -1206,7 +1277,7 @@ End[];
 
 
 toQuaterPProdPair::usage="toQuaterPProdPair[li1, li2] where li1 and li2 denote two partitions, decomposes the product of QuaterPolP[li1]*QuaterPolP[li2] on quaternionic zonal polynomials (normalisation P).
-The method uses explicit polynomials in the variables $x[j]";
+The method uses explicit polynomials in the variables $x[j]. toQuaterPProdPair is superseded by toQuaterPProductPair.";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1243,6 +1314,7 @@ HallScalarProduct::usage="The name of this command has been changed. See ?JackSc
 stableNormSqOfJackJ::usage="stableNormSqOfJackJ[partition] returns JackScalarProduct[JackPolJ[partition], JackPolJ[partition],Infinity, $\[Alpha]]";
 stableNormSqOfJackC::usage="stableNormSqOfJackC[partition] returns JackScalarProduct[JackPolC[partition], JackPolC[partition],Infinity, $\[Alpha]]";
 stableNormSqOfJackP::usage="stableNormSqOfJackP[partition] returns JackScalarProduct[JackPolP[partition], JackPolP[partition],Infinity, $\[Alpha]]";
+oldJackScalarProduct::usage="";
 JackScalarProduct::usage="JackScalarProduct is used to return the Jack scalar product <pol1, pol2>_alpha, with parameter alpha, of two symmetric functions pol1 and pol2 (see the syntax below).
 Distinct values of alpha define distinct scalar products.  When alpha=1 it coincides with the Hall scalar product. 
 The Jack scalar product (for some chosen parameter alpha) is simply defined when its arguments are power sums labelled by partitions; 
@@ -1298,6 +1370,8 @@ renormScalProdJackOnPS[uu_,v_, alpha_]:=renormScalProdJackOnPSexp[Expand@uu,Expa
 
 
 SetAttributes[HallScalarProduct, HoldAll]
+SetAttributes[oldJackScalarProduct, HoldAll]
+SetAttributes[JackScalarProduct, HoldAll]
 
 (* HallScalarProduct[aPol1_[lam_], aPol2_[mu_], alpha_] :=
  renormScalProdJackOnPS[toPowerSums[aPol1[extendPartition[lam]]], 
@@ -1323,19 +1397,22 @@ HallScalarProduct[uu_, v1_ + v2_, alpha_] :=
 HallScalarProduct[uu_, v1_ - v2_, alpha_] := 
   HallScalarProduct[uu, v1, alpha] - HallScalarProduct[uu, v2, alpha];
   *)
-  
-  SetAttributes[JackScalarProduct, HoldAll]
-  
-JackScalarProduct[aPol1_[lam_], aPol2_[mu_], Infinity, beta_] :=
+ 
+oldJackScalarProduct[aPol1_[lam_], aPol2_[mu_], Infinity, beta_] :=
  renormScalProdJackOnPS[
 toPowerSums[aPol1[extendPartition[lam]]], 
   toPowerSums[aPol2[extendPartition[mu]]], beta]
   
-JackScalarProduct[aPol1_[lam1_]*aPol2_[lam2_], aPol3_[mu_],Infinity, beta_] :=
+oldJackScalarProduct[aPol1_[lam1_]*aPol2_[lam2_], aPol3_[mu_],Infinity, beta_] :=
  renormScalProdJackOnPS[
   toPowerSums[aPol1[extendPartition[lam1]]]*
    toPowerSums[aPol2[extendPartition[lam2]]], 
-  toPowerSums[aPol3[extendPartition[mu]]], beta]
+  toPowerSums[aPol3[extendPartition[mu]]], beta] 
+
+(* The main commands 
+JackScalarProduct[aPol1_[lam_], aPol2_[mu_],Infinity, beta_] and 
+JackScalarProduct[aPol1_[lam1_]*aPol2_[lam2_], aPol3_[mu_],Infinity, beta_]
+are now defined in a following section *)
 
 JackScalarProduct::jackscalproWarning = "This is maybe not what you want: you are enforcing a finite number of variables. 
 In order to obtain the Jack inner product, use the syntax  JackScalarProduct[`1`[`2`], `3`[`4`], Infinity, `5`] instead.";
@@ -1447,11 +1524,11 @@ End[];
 (*SUn case*)
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Schur magic SU3*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Usage*)
 
 
@@ -1472,7 +1549,7 @@ SU3MultiplicityDynkin::usage="SU3MultiplicityDynkin[{la1,la2},{mu1,mu2}], where 
 See also SU3MultiplicityYoung.";
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Code*)
 
 
@@ -1523,6 +1600,264 @@ End[];
 
 Begin["`Private`"];
 
+End[];
+
+
+(* ::Section:: *)
+(*Improvements December 2018*)
+
+
+(* ::Subsection::Closed:: *)
+(*Use shiftPartitionInPol for Jack polynomials of type P*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*Usage*)
+
+
+
+
+
+(* ::Subsubsection::Closed:: *)
+(*Code*)
+
+
+Begin["`Private`"];
+shiftPartitionInPol[JP[list_]]:= Expand@With[{n=Length[list]},Product[$x[j],{j,1,n}]^Last[list]toPolbasic[JP[myModPartition[list]],n]]
+shiftPartitionInPol[JJ[list_]]:=JXtoJP[JJ[list]]/. {JP[list]->shiftPartitionInPol[JP[list]]}
+shiftPartitionInPol[JC[list_]]:=JXtoJP[JC[list]]/. {JP[list]->shiftPartitionInPol[JP[list]]}
+shiftPartitionInPol[ZP[list_]]:= Expand@With[{n=Length[list]},Product[$x[j],{j,1,n}]^Last[list]toPolbasic[ZP[myModPartition[list]],n]]
+shiftPartitionInPol[ZJ[list_]]:=ZXtoZP[ZJ[list]]/. {ZP[list]->shiftPartitionInPol[ZP[list]]}
+shiftPartitionInPol[ZC[list_]]:=ZXtoZP[ZC[list]]/. {ZP[list]->shiftPartitionInPol[ZP[list]]}
+shiftPartitionInPol[$s[list_]]:= Expand@With[{n=Length[list]},Product[$x[j],{j,1,n}]^Last[list]toPolbasic[$s[myModPartition[list]],n]]
+shiftPartitionInPol[QP[list_]]:= Expand@With[{n=Length[list]},Product[$x[j],{j,1,n}]^Last[list]toPolbasic[QP[myModPartition[list]],n]]
+shiftPartitionInPol[QJ[list_]]:=QXtoQP[QJ[list]]/. {QP[list]->shiftPartitionInPol[QP[list]]}
+shiftPartitionInPol[QC[list_]]:=QXtoQP[QC[list]]/. {QP[list]->shiftPartitionInPol[QP[list]]}
+End[];
+
+
+(* ::Subsection::Closed:: *)
+(*Improved toPol*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*Usage*)
+
+
+
+
+
+(* ::Subsubsection::Closed:: *)
+(*Code*)
+
+
+Begin["`Private`"];
+SetAttributes[toPol, HoldAll]
+polfamilymemberq[any_]:=MemberQ[{JackPolP,JackPolJ,JackPolC, SchurPol,ZonalPolC,ZonalPolJ,ZonalPolP,QuaterPolC,QuaterPolJ,QuaterPolP,monomialSum},#]&[any]
+toPol[expr_, nbv_] := 
+  Unevaluated@expr /. {
+$e[n_] :> SymmetricPolynomial[n, Table[$x[j], {j, 1, nbv}]], 
+$p[n_] :> Sum[$x[k]^n, {k, nbv}], 
+$m[li_] :> monomialSum[extendPartition[li,nbv], $x],
+JJ[li_] :> shiftPartitionInPol[JJ[extendPartition[li,nbv]]], 
+JC[li_] :> shiftPartitionInPol[JC[extendPartition[li,nbv]]],
+JP[li_] :> shiftPartitionInPol[JP[extendPartition[li,nbv]]], 
+$s[li_]  :> shiftPartitionInPol[$s[extendPartition[li,nbv]]], 
+ZJ[li_] :> shiftPartitionInPol[ZJ[extendPartition[li,nbv]]], 
+ZC[li_] :> shiftPartitionInPol[ZC[extendPartition[li,nbv]]], 
+ZP[li_] :> shiftPartitionInPol[ZP[extendPartition[li,nbv]]],
+QJ[li_] :> shiftPartitionInPol[QJ[extendPartition[li,nbv]]], 
+QC[li_] :>shiftPartitionInPol[QC[extendPartition[li,nbv]]], 
+QP[li_] :> shiftPartitionInPol[QP[extendPartition[li,nbv]]],
+ f_?polfamilymemberq[list_]:> f[extendPartition[list,nbv]]}
+
+toPol[aPol_[list_]] := toPol[aPol[list],Length[list]]
+End[];
+
+
+(* ::Subsection:: *)
+(*Improved toXXXProductPair*)
+
+
+(* ::Subsubsection:: *)
+(*Usage*)
+
+
+toSchurProductPair::usage="toSchurProductPair[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of SchurPol[li1]*SchurPol[li2] on Schur polynomials.
+ The method uses explicit polynomials in the variables $x[j]. toSchurProductPair uses toSchurProdPair on a simplified shifted partition.
+toSchurProductPair[li1,li2] gives the same result as toSchur[SchurPol[li1]*SchurPol[li2]] but the first method is usually faster. See also toSchurProdPairUsingPowerSums. 
+For a fast technique, one should use honeycombs (another package)."; 
+ 
+toZonalJProductPair::usage="toZonalJProdPair[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of ZonalPolJ[li1]*ZonalPolJ[li2] on zonal polynomials (normalization J).
+The method uses explicit polynomials in the variables $x[j]. toZonalJProductPair uses toZonalJProdPair on a simplified shifted partition.
+toZonalJProdPair[li1,li2] gives the same result as toZonalJ[ZonalPolJ[li1]*ZonalPolJ[li2]] but the first method is usually faster";
+toZonalCProductPair::usage="toZonalCProdPair[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of ZonalPolC[li1]*ZonalPolC[li2] on zonal polynomials (normalization C).
+The method uses explicit polynomials in the variables $x[j]. toZonalCProductPair uses toZonalCProdPair on a simplified shifted partition.
+toZonalCProdPair[li1,li2] gives the same result as toZonalC[ZonalPolC[li1]*ZonalPolC[li2]] but the first method is usually faster";
+toZonalPProductPair::usage="toZonalPProdPair[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of ZonalPolP[li1]*ZonalPolP[li2] on zonal polynomials (normalization P).
+The method uses explicit polynomials in the variables $x[j]. toZonalPProductPair uses toZonalPProdPair on a simplified shifted partition.
+toZonalPProdPair[li1,li2] gives the same result as toZonalP[ZonalPolP[li1]*ZonalPolP[li2]] but the first method is usually faster";
+
+toQuaterJProductPair::usage="toQuaterPProdPair[li1, li2] where li1 and li2 denote two partitions, decomposes the product of QuaterPolJ[li1]*QuaterPolJ[li2] on quaternionic zonal polynomials (normalisation J).
+The method uses explicit polynomials in the variables $x[j]. toQuaterJProductPair uses toQuaterJProdPair on a simplified shifted partition.";  
+toQuaterCProductPair::usage="toQuaterPProdPair[li1, li2] where li1 and li2 denote two partitions, decomposes the product of QuaterPolC[li1]*QuaterPolC[li2] on quaternionic zonal polynomials (normalisation C).
+The method uses explicit polynomials in the variables $x[j]. toQuaterCProductPair uses toQuaterCProdPair on a simplified shifted partition.";
+toQuaterPProductPair::usage="toQuaterPProdPair[li1, li2] where li1 and li2 denote two partitions, decomposes the product of QuaterPolP[li1]*QuaterPolP[li2] on quaternionic zonal polynomials (normalisation P).
+The method uses explicit polynomials in the variables $x[j]. toQuaterPProductPair uses toQuaterPProdPair on a simplified shifted partition.";
+
+toJackPProductPair::usage="toJackPProductPair[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of JackPolP[li1]*JackPolP[li2] on Jack polynomials (normalization P).
+The obtained coefficients depend on the Jack parameter $\[Alpha].";
+toJackCProductPair::usage="toJackCProductPair[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of JackPolC[li1]*JackPolC[li2] on Jack polynomials (normalization C).
+The obtained coefficients depend on the Jack parameter $\[Alpha].";
+toJackJProductPair::usage="toJackJProductPair[li1_,li2_] where li1 and li2 denote two partitions, decomposes the product of JackPolJ[li1]*JackPolJ[li2] on Jack polynomials (normalization J).
+The obtained coefficients depend on the Jack parameter $\[Alpha].";
+
+
+(* ::Subsubsection::Closed:: *)
+(*Code*)
+
+
+Begin["`Private`"];
+toZonalPProductPair[li1_,li2_]:= 
+Module[{li,deg1,deg2,deg,yp,pos,goodpart,sol,nbvar},
+li=li1+li2;nbvar=Length[li];
+deg1=Total[li1];deg2=Total[li2];deg=deg1+deg2;
+yp=ExtendedYoungPartitions[deg,nbvar];
+pos=Flatten@Position[Reverse[yp],li];
+ goodpart=Apply[Take[yp,#]&,-pos];
+sol=SolveAlways[shiftPartitionInPol[ZP[li1]]*shiftPartitionInPol[ZP[li2]]==\!\(
+\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(pos[\([\)\(1\)\(]\)]\)]\(a[i]\ shiftPartitionInPol[ZP[goodpart[\([i]\)]]]\)\),
+Table[$x[j],{j,1,nbvar}]];(Table[a[i],{i,1,pos[[1]]}]/. Flatten[sol]).ZP/@goodpart]
+
+toQuaterPProductPair[li1_, li2_] := 
+ Module[{li, deg1, deg2, deg, yp, pos, goodpart, sol, nbvar},
+  li = li1 + li2; nbvar = Length[li];
+  deg1 = Total[li1]; deg2 = Total[li2]; deg = deg1 + deg2;
+  yp = ExtendedYoungPartitions[deg, nbvar];
+  pos = Flatten@Position[Reverse[yp], li];
+   goodpart = Apply[Take[yp, #] &, -pos];
+  sol = SolveAlways[shiftPartitionInPol[QP[li1]]*shiftPartitionInPol[QP[li2]] == \!\(
+\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(pos[\([\)\(1\)\(]\)]\)]\(a[i]\ shiftPartitionInPol[QP[goodpart[\([i]\)]]]\)\), 
+    Table[$x[j], {j, 1, nbvar}]]; (Table[a[i], {i, 1, pos[[1]]}] /. Flatten[sol]). QP /@ goodpart]
+    
+toSchurProductPair[li1_,li2_]:= Module[{li,deg1,deg2,deg,yp,pos,goodpart,sol,nbvar},
+li=li1+li2;nbvar=Length[li];
+deg1=Total[li1];deg2=Total[li2];deg=deg1+deg2;
+yp=ExtendedYoungPartitions[deg,nbvar];
+pos=Flatten@Position[Reverse[yp],li];
+ goodpart=Apply[Take[yp,#]&,-pos];
+sol=SolveAlways[shiftPartitionInPol[$s[li1]]*shiftPartitionInPol[$s[li2]]==\!\(
+\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(pos[\([\)\(1\)\(]\)]\)]\(a[i]\ shiftPartitionInPol[$s[goodpart[\([i]\)]]]\)\),
+Table[$x[j],{j,1,nbvar}]];(Table[a[i],{i,1,pos[[1]]}]/. Flatten[sol]).$s/@goodpart]
+
+
+toZonalCProductPair[li1_,li2_]:= 
+Module[{li,deg1,deg2,deg,yp,pos,goodpart,sol,nbvar},
+li=li1+li2;nbvar=Length[li];
+deg1=Total[li1];deg2=Total[li2];deg=deg1+deg2;
+yp=ExtendedYoungPartitions[deg,nbvar];
+pos=Flatten@Position[Reverse[yp],li];
+ goodpart=Apply[Take[yp,#]&,-pos];
+sol=SolveAlways[shiftPartitionInPol[ZC[li1]]*shiftPartitionInPol[ZC[li2]]==\!\(
+\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(pos[\([\)\(1\)\(]\)]\)]\(a[i]\ shiftPartitionInPol[ZC[goodpart[\([i]\)]]]\)\),
+Table[$x[j],{j,1,nbvar}]];(Table[a[i],{i,1,pos[[1]]}]/. Flatten[sol]).ZC/@goodpart]
+
+toZonalJProductPair[li1_,li2_]:= 
+Module[{li,deg1,deg2,deg,yp,pos,goodpart,sol,nbvar},
+li=li1+li2;nbvar=Length[li];
+deg1=Total[li1];deg2=Total[li2];deg=deg1+deg2;
+yp=ExtendedYoungPartitions[deg,nbvar];
+pos=Flatten@Position[Reverse[yp],li];
+ goodpart=Apply[Take[yp,#]&,-pos];
+sol=SolveAlways[shiftPartitionInPol[ZJ[li1]]*shiftPartitionInPol[ZJ[li2]]==\!\(
+\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(pos[\([\)\(1\)\(]\)]\)]\(a[i]\ shiftPartitionInPol[ZJ[goodpart[\([i]\)]]]\)\),
+Table[$x[j],{j,1,nbvar}]];(Table[a[i],{i,1,pos[[1]]}]/. Flatten[sol]).ZJ/@goodpart]
+
+toQuaterJProductPair[li1_, li2_] := 
+ Module[{li, deg1, deg2, deg, yp, pos, goodpart, sol, nbvar},
+  li = li1 + li2; nbvar = Length[li];
+  deg1 = Total[li1]; deg2 = Total[li2]; deg = deg1 + deg2;
+  yp = ExtendedYoungPartitions[deg, nbvar];
+  pos = Flatten@Position[Reverse[yp], li];
+   goodpart = Apply[Take[yp, #] &, -pos];
+  sol = SolveAlways[shiftPartitionInPol[QJ[li1]]*shiftPartitionInPol[QJ[li2]] == \!\(
+\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(pos[\([\)\(1\)\(]\)]\)]\(a[i]\ shiftPartitionInPol[QJ[goodpart[\([i]\)]]]\)\), 
+    Table[$x[j], {j, 1, nbvar}]]; (Table[a[i], {i, 1, pos[[1]]}] /. Flatten[sol]). QJ /@ goodpart]
+    
+toQuaterCProductPair[li1_, li2_] := 
+ Module[{li, deg1, deg2, deg, yp, pos, goodpart, sol, nbvar},
+  li = li1 + li2; nbvar = Length[li];
+  deg1 = Total[li1]; deg2 = Total[li2]; deg = deg1 + deg2;
+  yp = ExtendedYoungPartitions[deg, nbvar];
+  pos = Flatten@Position[Reverse[yp], li];
+   goodpart = Apply[Take[yp, #] &, -pos];
+  sol = SolveAlways[shiftPartitionInPol[QC[li1]]*shiftPartitionInPol[QC[li2]] == \!\(
+\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(pos[\([\)\(1\)\(]\)]\)]\(a[i]\ shiftPartitionInPol[QC[goodpart[\([i]\)]]]\)\), 
+    Table[$x[j], {j, 1, nbvar}]]; (Table[a[i], {i, 1, pos[[1]]}] /. Flatten[sol]). QC /@ goodpart]
+
+
+
+toJackPProductPair[li1_, li2_] := 
+ Module[{li, deg1, deg2, deg, yp, pos, goodpart, sol, nbvar},
+  li = li1 + li2; nbvar = Length[li];
+  deg1 = Total[li1]; deg2 = Total[li2]; deg = deg1 + deg2;
+  yp = ExtendedYoungPartitions[deg, nbvar];
+  pos = Flatten@Position[Reverse[yp], li];
+   goodpart = Apply[Take[yp, #] &, -pos];
+  sol = SolveAlways[(shiftPartitionInPol[JP[li1]]*shiftPartitionInPol[JP[li2]] == \!\(
+\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(pos[\([\)\(1\)\(]\)]\)]\(a[i]\ shiftPartitionInPol[JP[goodpart[\([i]\)]]]\)\)), 
+Table[$x[j], {j, 1, nbvar}]];
+sol = Select[sol,FreeQ[#,HoldPattern[$\[Alpha]->_]]&]; (* I tell it to select solutions that do not give values for $\[Alpha] *)
+ (Table[a[i], {i, 1, pos[[1]]}] /. Flatten[sol]). JP /@ goodpart]
+ 
+toJackJProductPair[li1_, li2_] := 
+ Module[{li, deg1, deg2, deg, yp, pos, goodpart, sol, nbvar},
+  li = li1 + li2; nbvar = Length[li];
+  deg1 = Total[li1]; deg2 = Total[li2]; deg = deg1 + deg2;
+  yp = ExtendedYoungPartitions[deg, nbvar];
+  pos = Flatten@Position[Reverse[yp], li];
+   goodpart = Apply[Take[yp, #] &, -pos];
+  sol = SolveAlways[(shiftPartitionInPol[JJ[li1]]*shiftPartitionInPol[JJ[li2]] == \!\(
+\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(pos[\([\)\(1\)\(]\)]\)]\(a[i]\ shiftPartitionInPol[JJ[goodpart[\([i]\)]]]\)\)), 
+  Table[$x[j], {j, 1, nbvar}]];
+sol = Select[sol,FreeQ[#,HoldPattern[$\[Alpha]->_]]&]; (* I tell it to select solutions that do not give values for $\[Alpha] *)
+ (Table[a[i], {i, 1, pos[[1]]}] /. Flatten[sol]). JJ /@ goodpart]
+ 
+toJackCProductPair[li1_, li2_] := 
+ Module[{li, deg1, deg2, deg, yp, pos, goodpart, sol, nbvar},
+  li = li1 + li2; nbvar = Length[li];
+  deg1 = Total[li1]; deg2 = Total[li2]; deg = deg1 + deg2;
+  yp = ExtendedYoungPartitions[deg, nbvar];
+  pos = Flatten@Position[Reverse[yp], li];
+   goodpart = Apply[Take[yp, #] &, -pos];
+  sol = SolveAlways[(shiftPartitionInPol[JC[li1]]*shiftPartitionInPol[JC[li2]] == \!\(
+\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(pos[\([\)\(1\)\(]\)]\)]\(a[i]\ shiftPartitionInPol[JC[goodpart[\([i]\)]]]\)\)), 
+  Table[$x[j], {j, 1, nbvar}]];
+sol = Select[sol,FreeQ[#,HoldPattern[$\[Alpha]->_]]&]; (* I tell it to select solutions that do not give values for $\[Alpha] *)
+ (Table[a[i], {i, 1, pos[[1]]}] /. Flatten[sol]). JC /@ goodpart]
+ End[];
+
+
+(* ::Subsection::Closed:: *)
+(*Redefine Jack inner product*)
+
+
+ Begin["`Private`"];
+JackScalarProduct[aPol1_[lam_], aPol2_[mu_],Infinity, beta_] :=
+ renormScalProdJackOnPS[
+toPowerSums[toPol[aPol1[lam],Total[lam]]], 
+toPowerSums[toPol[aPol2[mu],Total[mu]]], beta]
+
+JackScalarProduct[aPol1_[lam1_]*aPol2_[lam2_], aPol3_[mu_],Infinity, beta_] :=
+ renormScalProdJackOnPS[
+  toPowerSums[toPol[aPol1[lam1],Total[lam1]]]*
+   toPowerSums[toPol[aPol1[lam2],Total[lam2]]], 
+  toPowerSums[toPol[aPol1[mu],Total[mu]]], beta]
+  
+JackScalarProduct[aPol1_[la_], aPol2_[mu_], $x,beta_]:=
+Module[{},
+Message[JackScalarProduct::jackscalproWarning,aPol1,restrictPartition[la],aPol2,restrictPartition[mu],beta];
+renormScalProdJackOnPS[toPowerSums[toPol[aPol1[la]]], toPowerSums[toPol[aPol2[mu]]], beta]]
 End[];
 
 
