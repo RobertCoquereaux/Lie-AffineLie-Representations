@@ -1,0 +1,29 @@
+# Wolfram / Mathematica
+*.mx
+*.m~         # backups WL
+*.wlt        # test reports
+*.wlui       # UI state
+*.paclet
+*.nb~        # notebook backups
+*.tmp
+*.bak
+
+# macOS / Windows bric-à-brac
+.DS_Store
+Icon?
+Thumbs.db
+desktop.ini
+
+# Misc
+*.old
+*.log
+*.out
+*.aux
+
+# Build / export artefacts (PDF/images)
+*.pdf
+*.png
+*.svg
+
+# Optionnel: ignorer résultats lourds
+examples/*-outputs.nb
